@@ -8,7 +8,7 @@ exports.register = (req, res, next) => {
     bcrypt.hash(req.body.password, 10).then(
         (hash) => {
             const user = new User( {
-                id: UUID(),
+                id: "12345",
                 username: req.body.username,
                 password: hash,
                 email: req.body.email,

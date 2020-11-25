@@ -26,7 +26,7 @@ app.use(express.static('../frontend/public'))
 
 app.post('/api/v1/register', (req, res, next) => {
     const account = new Account({
-        //id: UUID,
+        id: "12345",
         username: req.body.input_username,
         passwordHash: req.body.input_password,
         email: req.body.input_email,
@@ -55,6 +55,7 @@ app.post('/api/v1/login', (req, res, next) => {
 
 });
 
+// for testing
 app.get('/find/:user', (req, res, next) => {
     Account.findOne({
         username: req.params.user
@@ -70,6 +71,8 @@ app.get('/find/:user', (req, res, next) => {
         }
     );
 });
+
+// for testing
 app.get('/accounts', (req, res, next) => {
     Account.find().then(
         (account) => {
