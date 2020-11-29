@@ -5,6 +5,20 @@ const server = http.createServer(app);
 
 server.listen(3000);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // returns a valid port
 // const normalizePort = val => {
 //     const port = parseInt(val, 10);
