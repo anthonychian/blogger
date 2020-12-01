@@ -1,35 +1,28 @@
-// TO DO: 
-// Finish login route
-// Add middleware
-// Add validation
-
 const express = require('express');
 const router = express.Router();
 const Account = require('../../../ models/account')
+const bcrypt = require('bcrypt')
 require('dotenv').config()
 
-const bodyParser = require('body-parser');
-var jsonParser = bodyParser.json();
+// const bodyParser = require('body-parser');
+// var jsonParser = bodyParser.json();
 
 const { check, validationResult } = require('express-validator'); 
 
 const jwt = require('jsonwebtoken');
-const { read } = require('fs');
-//router.use(express.json())
 
 
 
 router.post('/register', [
-    check('username', 'Username must be less than 16 characters').isLength({ max: 16 }),
+    check('username', 'Username must be less than 16 characters').not().isEmpty().isLength({ max: 16 }),
     // note: isLength() min: is not working
-    check('password', 'Password must be between 6 - 50 characters').isLength({ max: 50 }),
+    check('password', 'Password must be between 6 - 50 characters').not().isEmpty().isLength({ min: 6, max: 50 }),
     // note: isEmail() is not working
-    check('email', 'Enter a valid email'),
-    check('firstName', 'Enter the first 16 characters of your first name').isLength({ max: 16 }),
-    check('lastName', 'Enter the first 16 characters of your last name').isLength({ max: 16 }),
-    check('imgUrl', 'Image URL cannot be more than 50 characters').isLength({ max: 50 }),
+    check('email', 'Enter a valid email').isEmail(),
+    check('firstName', 'Enter the first 16 characters of your first name').not().isEmpty().isLength({ max: 16 }),
+    check('lastName', 'Enter the first 16 characters of your last name').not().isEmpty().isLength({ max: 16 }),
+    check('imgUrl', 'Image URL cannot be more than 50 characters').not().isEmpty().isLength({ max: 50 }),
   ], 
-  jsonParser,
   async (req, res) => { 
     // validation checks for all the input fields  
     const errors = validationResult(req);
@@ -39,15 +32,24 @@ router.post('/register', [
 
     const {username, password, email, firstName, lastName, imgUrl} = req.body
 
-    // hash the password needs to be done still 
+    // search database for duplicate username/email
+    try {
+        let findUsername = await Account.findOne({ username })
+        let findEmail = await Account.findOne({ email })
+        
+        if (findUsername || findEmail)  {
+            return res.status(400).json({
+                invalid_credentials: 'The username or email has already been taken'
+            });
+        }
 
-    let findUsername = await Account.findOne({ username })
-    let findEmail = await Account.findOne({ email })
+        // hash the password before storing
+        const salt = await bcrypt.genSalt()
+        const hashedPassword = await bcrypt.hash(password, salt)
 
-    if (!findUsername && !findEmail) {
         var account = new Account({
             username,
-            password,
+            password: hashedPassword,
             email,
             firstName,
             lastName,
@@ -68,21 +70,8 @@ router.post('/register', [
             }
         );
     }
-    else if (findUsername && !findEmail)  {
-        res.status(400).json({
-            username_error: 'The username: ' + username + ' is already taken'
-        });
-    }
-    else if (!findUsername && findEmail)  {
-        res.status(400).json({
-            email_error: 'The email: ' + email + ' is already taken'
-        });
-    }
-    else if (findUsername && findEmail)  {
-        res.status(400).json({
-            username_error: 'The username: ' + username + ' is already taken',
-            email_error: 'The email: ' + email + ' is already taken'
-        });
+    catch(error) {
+        res.status(500).send(error)
     }
 
 });
@@ -94,39 +83,87 @@ router.post('/login', [
     check('username', 'Username is required'),
     check('password', 'Password is required')
   ], 
-  jsonParser,
   async (req, res) => { 
     // validation checks for all the input fields  
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
-
-    // password still needs to be done
     const {username, password} = req.body
 
-    let account = await Account.findOne({ username })
+    try {
+        // search database for account with correct username
+        let account = await Account.findOne({ username: username })
 
-    if (account) {
-        const payload = {
-            user: {
-                id: account.id
-            }
+
+        if (!account) {
+            return res.status(400).json({
+                message: 'The username or password you entered is incorrect'
+            });
         }
-        const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET)
-        res.json({ accessToken })
-    }
-    else {
-        res.status(400).json({
-            message: 'The username ' + username + ' does not exist'
-        });
-    }
 
+        // check password
+        let compareResult = await bcrypt.compare(password, account.password)
+
+        if (compareResult) {
+            // send jwt
+            const payload = {
+                user: {
+                    id: account.id
+                }
+            }
+            // creates token
+            const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10m'})
+            return res.json({ accessToken })
+        } 
+            else {
+                return res.status(400).json({
+                message: 'The username or password you entered is incorrect'
+            });
+        }
+    }
+    catch(error) {
+        res.status(500).send(error)
+    }
 });
 
-// test for authenticate works!
+
+router.put('/enable', authenticateToken, async (req, res) => {
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id })
+        if (!account) {
+            return res.status(400).json({
+                message: 'Please login'
+            });
+        }
+        account.isDelete = false;
+        account.save();
+    }
+    catch(error) {
+        res.status(500).send(error)
+    }
+})
+
+router.put('/disable', authenticateToken, async (req, res) => {
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id })
+        if (!account) {
+            return res.status(400).json({
+                message: 'Please login'
+            });
+        }
+        account.isDelete = true;
+        account.save();
+    }
+    catch(error) {
+        res.status(500).send(error)
+    }
+})
+
+
+// test for authentication
 router.get('/accounts', authenticateToken, async (req, res) => {
-    let account = await Account.findOne({ id : req.user.id })
+    let account = await Account.findOne({ _id : req.user.user.id })
     res.json(account)
 });
 
@@ -163,36 +200,3 @@ function authenticateToken(req, res, next) {
         next()
     })
 }
-
-
-
-
-
-
-// const bodyParser = require('body-parser');
-// var jsonParser = bodyParser.json();
-
-// router.post('/register', jsonParser, (req, res) => {
-//     const {username, password, email, firstName, lastName, imgUrl} = req.body
-//     var account = new Account({
-//         username,
-//         password,
-//         email,
-//         firstName,
-//         lastName,
-//         imgUrl
-//     });
-//     account.save().then(
-//         () => {
-//             res.status(201).json({
-//                 message: 'Account created'
-//             });
-//         }
-//     ).catch(
-//         (error) => {
-//             res.status(500).json({
-//                 error: error
-//             });
-//         }
-//     );
-// });

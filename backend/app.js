@@ -8,6 +8,8 @@ var userRouter = require('./routes/api/v1/user');
 
 mongo.connectMongoDB();
 
+app.use(express.json({extended: false}))
+
 app.use('/auth', authRouter);
 app.use('/blog', blogRouter);
 app.use('/user', userRouter);
