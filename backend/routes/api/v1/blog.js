@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Blog = require('../../../ models/blog')
+const Blog = require('../../../models/blog')
 
 // create blog
 router.post('/create', (req, res, next) => {

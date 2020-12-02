@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Account = require('../../../ models/account')
+const Account = require('../../../models/account')
 const bcrypt = require('bcrypt')
 require('dotenv').config()
 
@@ -90,8 +90,11 @@ router.post('/login', [
 
     try {
         // search database for account with correct username
-        let account = await Account.findOne({ username: username, email: username })
+        let account = await Account.findOne({ username: username })
 
+        if (!account) {
+            account = await Account.findOne({ email: username })
+        }
 
         if (!account) {
             return res.status(400).json({
