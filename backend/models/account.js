@@ -7,7 +7,7 @@ const accountSchema = new mongoose.Schema({
     email: { type: String, required: true},
     firstName: { type: String, required: true },
     lastName: { type: String, required: true },
-    imgUrl: { type: String, required: true },
+    imgUrl: { type: String, default: ' ' },
     modifiedDate: { type: Date, default: dateNow},
     createdDate: { type: Date, default: dateNow},
     isDelete: { type: Boolean, default: false},

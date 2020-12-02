@@ -12,7 +12,6 @@ const { check, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
 
-
 router.post('/register', [
     check('username', 'Username must be less than 16 characters').not().isEmpty().isLength({ max: 16 }),
     // note: isLength() min: is not working
@@ -21,7 +20,6 @@ router.post('/register', [
     check('email', 'Enter a valid email').isEmail(),
     check('firstName', 'Enter the first 16 characters of your first name').not().isEmpty().isLength({ max: 16 }),
     check('lastName', 'Enter the first 16 characters of your last name').not().isEmpty().isLength({ max: 16 }),
-    check('imgUrl', 'Image URL cannot be more than 50 characters').not().isEmpty().isLength({ max: 50 }),
   ], 
   async (req, res) => { 
     // validation checks for all the input fields  
@@ -30,7 +28,7 @@ router.post('/register', [
         return res.status(400).json({ errors: errors.array() });
     }
 
-    const {username, password, email, firstName, lastName, imgUrl} = req.body
+    const {username, password, email, firstName, lastName} = req.body
 
     // search database for duplicate username/email
     try {
@@ -52,8 +50,7 @@ router.post('/register', [
             password: hashedPassword,
             email,
             firstName,
-            lastName,
-            imgUrl
+            lastName
         });
 
         await account.save().then(
@@ -80,8 +77,8 @@ router.post('/register', [
 
 
 router.post('/login', [
-    check('username', 'Username is required'),
-    check('password', 'Password is required')
+    check('username', 'Username is required').not().isEmpty(),
+    check('password', 'Password is required').not().isEmpty()
   ], 
   async (req, res) => { 
     // validation checks for all the input fields  
@@ -93,12 +90,12 @@ router.post('/login', [
 
     try {
         // search database for account with correct username
-        let account = await Account.findOne({ username: username })
+        let account = await Account.findOne({ username: username, email: username })
 
 
         if (!account) {
             return res.status(400).json({
-                message: 'The username or password you entered is incorrect'
+                message: 'The username/email or password you entered is incorrect'
             });
         }
 
@@ -118,7 +115,7 @@ router.post('/login', [
         } 
             else {
                 return res.status(400).json({
-                message: 'The username or password you entered is incorrect'
+                message: 'The username/email or password you entered is incorrect'
             });
         }
     }
@@ -136,8 +133,10 @@ router.put('/enable', authenticateToken, async (req, res) => {
                 message: 'Please login'
             });
         }
-        account.isDelete = false;
-        account.save();
+        if (account.isDelete) {
+            account.isDelete = false;
+            account.save();
+        }
     }
     catch(error) {
         res.status(500).send(error)
@@ -152,8 +151,10 @@ router.put('/disable', authenticateToken, async (req, res) => {
                 message: 'Please login'
             });
         }
-        account.isDelete = true;
-        account.save();
+        if (!account.isDelete) {
+            account.isDelete = true;
+            account.save();
+        }
     }
     catch(error) {
         res.status(500).send(error)
