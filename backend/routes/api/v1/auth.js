@@ -90,8 +90,8 @@ router.post('/login', [
 
     try {
         // search database for account with correct username
-        let account = await Account.findOne({ username: username })
-
+        let account = await Account.findOne({ username: username})
+        
         if (!account) {
             account = await Account.findOne({ email: username })
         }
@@ -204,3 +204,24 @@ function authenticateToken(req, res, next) {
         next()
     })
 }
+
+
+// async function postData() {
+//     // '../backend/routes/api/v1/auth/login'
+//     const response = await fetch('/auth/login' , {
+//         method: POST,
+//         headers: {
+//             'Content-Type': 'application/json'
+//         },
+//         body: JSON.stringify({ 
+//             username: document.getElementById("username_login").innerHTML, 
+//             password: document.getElementById("password_login").innerHTML 
+//         }), 
+
+//     }) 
+//     .then(response => response.json())
+//     // .then(response => {
+        
+//     // })
+//     .catch(error => console.error(error))
+// }
