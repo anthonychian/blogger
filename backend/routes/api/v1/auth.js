@@ -98,7 +98,7 @@ router.post('/login', [
 
         if (!account) {
             return res.status(400).json({
-                message: 'The username/email or password you entered is incorrect'
+                error: 'The username/email or password you entered is incorrect'
             });
         }
 
@@ -118,7 +118,7 @@ router.post('/login', [
         } 
             else {
                 return res.status(400).json({
-                message: 'The username/email or password you entered is incorrect'
+                    error: 'The username/email or password you entered is incorrect'
             });
         }
     }

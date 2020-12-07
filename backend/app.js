@@ -3,9 +3,13 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 
+
+var cors = require('cors')
 var authRouter = require('./routes/api/v1/auth');
 var blogRouter = require('./routes/api/v1/blog');
 var userRouter = require('./routes/api/v1/user');
+
+app.use(cors())
 
 mongo.connectMongoDB();
 

@@ -2,120 +2,256 @@
     <head>
         <meta charset="utf-8">
         <title>Login</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" integrity="sha512-8bHTC73gkZ7rZ7vpqUQThUDhqcNFyYi2xgDgPDHc+GXVGHXq+xPjynxIopALmOPqzo9JZj0k6OqqewdGO3EsrQ==" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" ></script> -->
     </head>
     <body>
         <div class="ui centered page grid">
             <div class="column seven wide">
+
+                <!-- LOGIN SECTION -->
                 <div id="login" class="ui vertical segment">
-                    <form class="ui inverted form segment">
-                        <h1>
-                            Sign In
-                            <a class="ui right floated button" onclick="showAuth()" >Register</a>
-                        </h1>
-        
-                        <div class="field">
+                    <div class="ui warning attached message">
+                        <i class="icon help"></i>
+                        Don't have an account?<a class="ui right floated" href="#" onclick="showAuth()"> Register </a>
+                    </div>
+                    <form class="ui inverted form segment" onsubmit="return false">
+                        <h1>Sign In</h1>
+                        <div id="field_login_username" class="field">
                             <label>Username / Email</label>
                             <div class="ui left icon input">
-                                <input id="username_login" type="text" name="username_login">
+                                <input id="username_login" type="text">
                                 <i class="user icon"></i>
                             </div>
                         </div>
-                        <div class="field">
+                        <div id="field_login_password" class="field">
                             <label>Password</label>
                             <div class="ui left icon input">
-                                <input id="password_login" type="password" name="password_login">
-                            <i class="lock icon"></i>
+                                <input id="password_login" type="password">
+                                <i class="lock icon"></i>
                             </div>
                         </div>
-                        <div class="field">
-                          <div class="ui checkbox">
-                            <input type="checkbox" tabindex="0" class="hidden">
-                            <label>Stay signed in</label>
-                          </div>
+                        <div class="inline field">
+                            <div class="ui checkbox">
+                              <input type="checkbox" id="stay_signed_in">
+                              <label for="stay_signed_in">Stay signed in</label>
+                            </div>
                         </div>
-                        <button class="ui button" onclick="submitLogin()">Submit</button>
+                        <button class="ui blue button" onclick="submitLogin()">Submit</button>
                     </form>
+                    <div id="login_message" class="ui negative message" style="display:none">
+                        <i class="close icon"onclick="toggleMessage('login_message')"></i>
+                        <div class="header">
+                          Login Error!
+                        </div>
+                        <p id="login_message_text"></p>
+                    </div>
                 </div>
-                <div id="register" class="ui vertical segment" style="display:none;">
-                    <form class="ui inverted form segment" action="/auth/register" method="POST">
-                        <h1>
-                            Register
-                            <a class="ui right floated button" onclick="showAuth()">Sign In</a>
-                        </h1>
-                        <div class="field">
+
+
+                <!-- REGISTER SECTION -->
+                <div id="register" class="ui vertical segment" style="display:none">
+                    <div class="ui attached warning message">
+                        <i class="icon help"></i>
+                        Already signed up? <a class="ui right floated" href="#" onclick="showAuth()">Sign In</a> instead.
+                    </div>
+                    <form class="ui inverted form segment"onsubmit="return false">
+                        <h1>Register</h1>
+                        <div id="field_register_firstName" class="field">
                             <label>First Name</label>
-                            <input type="text" name="firstName" placeholder="First Name">
+                            <input type="text" id="firstName_register" placeholder="First Name">
                         </div>
-                        <div class="field">
+                        <div id="field_register_lastName" class="field">
                             <label>Last Name</label>
-                            <input type="text" name="lastName" placeholder="Last Name">
+                            <input type="text" id="lastName_register" placeholder="Last Name">
                         </div>
-                        <div class="field">
+                        <div id="field_register_email" class="field">
                             <label>Email</label>
-                            <input type="text" name="email" placeholder="Email">
+                            <input type="text" id="email_register" placeholder="Email">
                         </div>
-                        <div class="field">
+                        <div id="field_register_username" class="field">
                             <label>Username</label>
-                            <input type="text" name="username" placeholder="Username">
+                            <input type="text" id="username_register" placeholder="Username">
                         </div>
-                        <div class="field">
+                        <div id="field_register_password" class="field">
                             <label>Password</label>
-                            <input type="text" name="password" placeholder="Password">
+                            <input type="text" id="password_register" placeholder="Password">
                         </div>
-                        <div class="field">
-                          <div class="ui checkbox">
-                            <input type="checkbox" tabindex="0" class="hidden">
-                            <label>Stay signed in</label>
-                          </div>
+                        <div class="inline field">
+                            <div class="ui checkbox">
+                              <input type="checkbox" id="terms">
+                              <label for="terms">I agree to the terms and conditions</label>
+                            </div>
                         </div>
-                        <button class="ui button">Submit</button>
+                        <button class="ui blue button" onclick="submitRegister()" >Submit</button>
                     </form>
+                    <div id="register_message" class="ui negative message" style="display:none">
+                        <i class="close icon"onclick="toggleMessage('register_message')"></i>
+                        <div class="header">
+                          Register Error!
+                        </div>
+                        <p id="register_message_text"></p>
+                    </div>
                 </div>
+
+                
             </div>
          </div>
-        
-
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" integrity="sha512-dqw6X88iGgZlTsONxZK9ePmJEFrmHwpuMrsUChjAw1mRUhUITE5QU9pkcSox+ynfLhL15Sv2al5A0LVyDCmtUw==" crossorigin="anonymous"></script>
-        <script>
-            function submitLogin() {
-                // '../backend/routes/api/v1/auth/login'
-                console.log(document.getElementById('username_login').value)
-                console.log(document.getElementById('password_login').value)
-                fetch('/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        username: document.getElementById('username_login').value, 
-                        password: document.getElementById('password_login').value
-                    }) 
-                }) 
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data)
-                })
-                .catch(function(err) {
-                    //Failure
-                    alert('Error')
-                });
-            }
-
-            
-
-            function showAuth() {
-                var x = document.getElementById("login");
-                var y = document.getElementById("register");
-                if (x.style.display === "none") {
-                    x.style.display = "block";
-                    y.style.display = "none"
-                } else {
-                    x.style.display = "none";
-                    y.style.display = "block";
-                }
-            }
-        </script>
     </body>
+    <script>
+
+        function submitLogin() {
+
+            // get html elements
+            let passwordField = document.getElementById('field_login_password');
+            let usernameField = document.getElementById('field_login_username');
+            let popup = document.getElementById('login_message');
+            let popupText = document.getElementById('login_message_text');
+
+            // reset error values
+            popup.style.display = "none";
+            usernameField.className = 'field';
+            passwordField.className = 'field';
+
+            fetch('/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    username: document.getElementById('username_login').value, 
+                    password: document.getElementById('password_login').value
+                }) 
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    // display field error
+                    passwordField.className = 'field error';
+                    usernameField.className = 'field error';
+
+                    // display error message
+                    popupText.innerHTML = data.error;
+                    popup.style.display = "block";
+                }
+                if (data.accessToken){
+                    // save jwt token in a cookie
+                    
+                    document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=10m';
+                    console.log(document.cookie)
+
+                    // to delete cookie set to past date
+                    // document.cookie = Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+
+
+                }
+            })
+            .catch(function(err) {
+                //Failure
+                console.log(err)
+            });
+        }
+
+
+        function submitRegister() {
+
+            // get html elements
+            let usernameField = document.getElementById('field_register_username');
+            let passwordField = document.getElementById('field_register_password');
+            let emailField = document.getElementById('field_register_email');
+            let firstNameField = document.getElementById('field_register_firstName');
+            let lastNameField = document.getElementById('field_register_lastName');
+            let popup = document.getElementById('register_message');
+            let popupText = document.getElementById('register_message_text');
+
+            // reset error values
+            popup.style.display = "none";
+            popupText.innerHTML = ""
+            usernameField.className = 'field';
+            passwordField.className = 'field';
+            emailField.className = 'field';
+            firstNameField.className = 'field';
+            lastNameField.className = 'field';
+
+            fetch('/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    username: document.getElementById('username_register').value, 
+                    password: document.getElementById('password_register').value,
+                    email: document.getElementById('email_register').value, 
+                    firstName: document.getElementById('firstName_register').value, 
+                    lastName: document.getElementById('lastName_register').value
+                }) 
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.errors) {
+                    for (let i = 0; i < data.errors.length; i++) {
+                        switch(data.errors[i].param) {
+                            case 'username':
+                                usernameField.className = 'field error';
+                                break;
+                            case 'password':
+                                passwordField.className = 'field error';
+                                break;
+                            case 'email':
+                                emailField.className = 'field error';
+                                break;
+                            case 'firstName':
+                                firstNameField.className = 'field error';
+                                break;
+                            case 'lastName':
+                                lastNameField.className = 'field error';
+                                break;
+                            default:
+                        }
+                        popupText.innerHTML += data.errors[i].msg + '<br>';
+                    }
+                    console.log(popupText.innerHTML)
+                    
+                    // display error message
+                    //popupText.innerHTML = data.errors[0].msg
+                    popup.style.display = "block";
+                }
+                else if (data.invalid_credentials) {
+                    // display error message
+                    popupText.innerHTML = data.invalid_credentials;
+                    popup.style.display = "block";
+                }
+                if (data.message) {
+                    // account created
+                    console.log(data.message)
+                }
+                
+            })
+            .catch(function(err) {
+                //Failure
+                console.log(err)
+            });
+        }
+
+
+        // hides a popup message
+        function toggleMessage(id) {
+            let popup = document.getElementById(id);
+            popup.style.display = "none";
+        }
+
+        // shows/hides the register and login section
+        function showAuth() {
+            let x = document.getElementById("login");
+            let y = document.getElementById("register");
+            if (x.style.display === "none") {
+                x.style.display = "block";
+                y.style.display = "none"
+            } else {
+                x.style.display = "none";
+                y.style.display = "block";
+            }
+        }
+    </script>
 </html>
