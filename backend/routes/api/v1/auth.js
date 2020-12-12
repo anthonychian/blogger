@@ -1,22 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const Account = require('../../../models/account')
-const bcrypt = require('bcrypt')
-require('dotenv').config()
-
+const Account = require('../../../models/account');
+const verify = require('../../../middleware/verify');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { check, validationResult } = require('express-validator'); 
+require('dotenv').config();
 // const bodyParser = require('body-parser');
 // var jsonParser = bodyParser.json();
-
-const { check, validationResult } = require('express-validator'); 
-
-const jwt = require('jsonwebtoken');
 
 
 router.post('/register', [
     check('username', 'Username must be less than 16 characters').not().isEmpty().isLength({ max: 16 }),
-    // note: isLength() min: is not working
     check('password', 'Password must be between 6 - 50 characters').not().isEmpty().isLength({ min: 6, max: 50 }),
-    // note: isEmail() is not working
     check('email', 'Enter a valid email').isEmail(),
     check('firstName', 'Enter the first 16 characters of your first name').not().isEmpty().isLength({ max: 16 }),
     check('lastName', 'Enter the first 16 characters of your last name').not().isEmpty().isLength({ max: 16 }),
@@ -53,7 +49,8 @@ router.post('/register', [
             lastName
         });
 
-        await account.save().then(
+        await account.save()
+        .then(
             () => {
                 res.status(201).json({
                     message: 'Account created'
@@ -113,7 +110,7 @@ router.post('/login', [
                 }
             }
             // creates token
-            const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '10m'})
+            const accessToken = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1hr'})
             return res.json({ accessToken })
         } 
             else {
@@ -128,7 +125,7 @@ router.post('/login', [
 });
 
 
-router.put('/enable', authenticateToken, async (req, res) => {
+router.put('/enable', verify.authenticateToken, async (req, res) => {
     try {
         let account = await Account.findOne({ _id : req.user.user.id })
         if (!account) {
@@ -146,7 +143,7 @@ router.put('/enable', authenticateToken, async (req, res) => {
     }
 })
 
-router.put('/disable', authenticateToken, async (req, res) => {
+router.put('/disable', verify.authenticateToken, async (req, res) => {
     try {
         let account = await Account.findOne({ _id : req.user.user.id })
         if (!account) {
@@ -166,14 +163,30 @@ router.put('/disable', authenticateToken, async (req, res) => {
 
 
 // test for authentication
-router.get('/accounts', authenticateToken, async (req, res) => {
+router.get('/accounts', verify.authenticateToken, async (req, res) => {
     let account = await Account.findOne({ _id : req.user.user.id })
     res.json(account)
 });
 
 
 router.get('/find', (req, res) => {
-    Account.find().then(
+    Account.find()
+    .then(
+        (account) => {
+            res.status(200).json(account);
+        }
+    ).catch(
+        (error) => {
+            res.status(404).json({
+                error: error
+            });
+        }
+    );
+});
+
+router.get('/findById/:id', (req, res) => {
+    Account.find({_id : req.params.id})
+    .then(
         (account) => {
             res.status(200).json(account);
         }
@@ -189,39 +202,21 @@ router.get('/find', (req, res) => {
 module.exports = router;
 
 
-function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
-    // check if token has been sent   
-    if (token == null) {
-       res.sendStatus(401)
-    }
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-        if (err) {
-            res.sendStatus(403)
-        }
-        req.user = user
-        next()
-    })
-}
+// function authenticateToken(req, res, next) {
+//     // const authHeader = req.headers['authorization']
+//     // const token = authHeader && authHeader.split(' ')[1]
+    
+//     const token = req.cookies.token
 
-
-// async function postData() {
-//     // '../backend/routes/api/v1/auth/login'
-//     const response = await fetch('/auth/login' , {
-//         method: POST,
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify({ 
-//             username: document.getElementById("username_login").innerHTML, 
-//             password: document.getElementById("password_login").innerHTML 
-//         }), 
-
-//     }) 
-//     .then(response => response.json())
-//     // .then(response => {
-        
-//     // })
-//     .catch(error => console.error(error))
+//     // check if token has been sent   
+//     if (token == null) {
+//        res.sendStatus(401)
+//     }
+//     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+//         if (err) {
+//             res.sendStatus(403)
+//         }
+//         req.user = user
+//         next()
+//     })
 // }

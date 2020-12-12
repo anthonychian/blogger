@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const dateNow = new Date().getUTCDate();
+const dateNow = new Date();
 
 const accountSchema = new mongoose.Schema({
     username: { type: String, required: true},

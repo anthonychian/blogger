@@ -16,7 +16,7 @@
                         <i class="icon help"></i>
                         Don't have an account?<a class="ui right floated" href="#" onclick="showAuth()"> Register </a>
                     </div>
-                    <form class="ui inverted form segment" onsubmit="return false">
+                    <form class="ui form segment" onsubmit="return false">
                         <h1>Sign In</h1>
                         <div id="field_login_username" class="field">
                             <label>Username / Email</label>
@@ -56,7 +56,7 @@
                         <i class="icon help"></i>
                         Already signed up? <a class="ui right floated" href="#" onclick="showAuth()">Sign In</a> instead.
                     </div>
-                    <form class="ui inverted form segment"onsubmit="return false">
+                    <form class="ui form segment"onsubmit="return false">
                         <h1>Register</h1>
                         <div id="field_register_firstName" class="field">
                             <label>First Name</label>
@@ -76,7 +76,7 @@
                         </div>
                         <div id="field_register_password" class="field">
                             <label>Password</label>
-                            <input type="text" id="password_register" placeholder="Password">
+                            <input type="password" id="password_register" placeholder="Password">
                         </div>
                         <div class="inline field">
                             <div class="ui checkbox">
@@ -111,6 +111,7 @@
 
             // reset error values
             popup.style.display = "none";
+            popupText.innerHTML = ""
             usernameField.className = 'field';
             passwordField.className = 'field';
 
@@ -126,24 +127,38 @@
             }) 
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    // display field error
-                    passwordField.className = 'field error';
+                if (data.errors) {
+                    for (let i = 0; i < data.errors.length; i++) {
+                        switch(data.errors[i].param) {
+                            case 'username':
+                                usernameField.className = 'field error';
+                                break;
+                            case 'password':
+                                passwordField.className = 'field error';
+                                break;
+                            default:
+                        }
+                        popupText.innerHTML += data.errors[i].msg + '<br>';
+                    }
+                    popup.style.display = "block";
+                }
+                else if (data.error) {
                     usernameField.className = 'field error';
-
-                    // display error message
+                    passwordField.className = 'field error';
                     popupText.innerHTML = data.error;
                     popup.style.display = "block";
                 }
                 if (data.accessToken){
+
+                    // redirect to blogs page
+                    window.location.href = "http://localhost:3000/blog.html";
+
                     // save jwt token in a cookie
-                    
-                    document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=10m';
+                    document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=1800';
                     console.log(document.cookie)
 
                     // to delete cookie set to past date
                     // document.cookie = Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
-
 
                 }
             })
@@ -211,10 +226,7 @@
                         }
                         popupText.innerHTML += data.errors[i].msg + '<br>';
                     }
-                    console.log(popupText.innerHTML)
-                    
                     // display error message
-                    //popupText.innerHTML = data.errors[0].msg
                     popup.style.display = "block";
                 }
                 else if (data.invalid_credentials) {

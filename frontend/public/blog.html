@@ -1,0 +1,111 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Home</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
+    </head>
+    <body>
+        <div class="ui secondary pointing menu">
+            <a id="home" class="active item">
+              Home
+            </a>
+            <a id="new post"class="item" href="http://localhost:3000/create_post.html">
+              New Post
+            </a>
+            <a id="my posts" class="item" href="http://localhost:3000/my_posts.html">
+                My Posts
+            </a>
+            <div class="right menu">
+              <a class="ui item" onclick="logout()">
+                Logout
+              </a>
+            </div>
+        </div>
+
+        <div id="items"class="ui unstackable items"></div>
+
+    </body>
+    <script>
+        getBlogs();
+
+        function getBlogs() {
+            let blogDiv = document.getElementById('items')
+            fetch('/blog', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.length) {
+                    let $res = '';
+                    for (let blog of data) {
+                        
+                        fetch('/auth/findById/' + blog.userId, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }) 
+                        .then(response => response.json())
+                        .then(data => {
+                            $res = generateBlogTemplate(blog, data[0].firstName, data[0].lastName)
+                            // console.log(res)
+                            $(blogDiv).append($res)
+                        })
+                        .catch(function(err) {
+                            console.log(err)
+                        });
+                    }
+                }
+                else if (data.error) {
+                    console.log(data.error)
+                }
+                else if (data.message) {
+                    console.log(data.message)
+                }
+                else {
+                    console.log('error')
+                }
+                
+            })
+            .catch(function(err) {
+                //Failure
+                console.log(err)
+            });
+        }
+
+        function generateBlogTemplate(blog, firstName, lastName) {
+            let template  = `
+                <div class="item">
+                    <a class="ui small image">
+                        <img src="https://semantic-ui.com/images/wireframe/image.png">
+                    </a>
+                    <div class="middle aligned content">
+                        <a class="header">${blog.header}</a>
+                        <div class=description>
+                            <p>${blog.content}</p>
+                        </div>
+                        <div class="details">
+                            <div>Created By: ${firstName} ${lastName}</div>
+                            <div>Post last updated: ${blog.modifiedDate}</div>
+                        </div>
+                    </div>
+                </div>
+            `
+            return template;
+        }
+
+        function logout() {
+             // save jwt token in a cookie
+            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+            console.log(document.cookie)
+
+            // redirect to blogs page
+            window.location.href = "http://localhost:3000/auth.html";
+        }
+    </script>
+</html>

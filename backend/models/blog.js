@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
-const dateNow = new Date().getUTCDate();
+const dateNow = new Date();
 
 const blogSchema = new mongoose.Schema({
     userId: { type: String, required: true },
+    header: { type: String, required: true},
     content: { type: String, required: true },
-    upvotes: { type: String, required: true },
-    viewCount: { type: String, required: true },
-    modifiedDate: { type: Date, default: dateNow, required: true },
-    createdDate: { type: Date, default: dateNow, required: true },
-    isDelete: { type: Boolean, default: false, required: true },
+    upvotes: { type: Number, default: 0},
+    viewCount: { type: Number, default: 0},
+    modifiedDate: { type: Date, default: dateNow},
+    createdDate: { type: Date, default: dateNow},
+    isDelete: { type: Boolean, default: false},
 });
 
 module.exports = mongoose.model('Blog', blogSchema);

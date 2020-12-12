@@ -1,0 +1,133 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>New Blog Post </title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js" ></script> -->
+    </head>
+    <body>
+        <div class="ui secondary pointing menu">
+            <a id="home"class="item" href="http://localhost:3000/blog.html">
+              Home
+            </a>
+            <a id="new post"class="active item">
+              New Post
+            </a>
+            <a id="my posts" class="item" href="http://localhost:3000/my_posts.html">
+                My Posts
+            </a>
+            <div class="right menu">
+              <a class="ui item" onclick="logout()">
+                Logout
+              </a>
+            </div>
+        </div>
+        <div class="ui centered page grid">
+            <div class="column ten wide">
+
+                
+                <!-- BLOG POST SECTION -->
+                <div id="create_post" class="ui vertical segment">
+                    <form class="ui  form segment"onsubmit="return false">
+                        <h1>New Blog Post</h1>
+                        <div class="ui hidden divider"></div>
+                        <div id="field_header" class="field">
+                            <label>Header</label>
+                            <div class="field">
+                                <input id="header_text">
+                            </div>
+                        </div>
+                        <div id="field_content" class="field">
+                            <label>Content</label>
+                            <div class="field">
+                                <textarea id="content_text"></textarea>
+                            </div>
+                        </div>
+                        <div class="ui hidden divider"></div>
+                        <button class="ui blue button" onclick="submitPost()"><i class="icon edit"></i>Submit</button>
+                    </form>
+                    <div id="create_post_message" class="ui negative message" style="display:none">
+                        <i class="close icon"onclick="toggleMessage('create_post_message')"></i>
+                        <div class="header">
+                          Create Post Error!
+                        </div>
+                        <p id="create_post_message_text"></p>
+                    </div>
+                </div>
+
+            </div>
+         </div>
+    </body>
+    <script>
+
+        function submitPost() {
+            // get html elements
+            let contentField = document.getElementById('field_content');
+            let headerField = document.getElementById('field_header');
+            let popup = document.getElementById('create_post_message');
+            let popupText = document.getElementById('create_post_message_text');
+
+            // reset error values
+            contentField.className = 'field';
+            headerField.className = 'field';
+            popup.style.display = "none";
+            popupText.innerHTML = ""
+
+            fetch('/blog/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    header: document.getElementById('header_text').value,
+                    content: document.getElementById('content_text').value
+                }) 
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.errors) {
+                    for (let i = 0; i < data.errors.length; i++) {
+                        switch(data.errors[i].param) {
+                            case 'header':
+                                headerField.className = 'field error';
+                                break;
+                            case 'content':
+                                contentField.className = 'field error';
+                                break;
+                            default:
+                        }
+                        popupText.innerHTML += data.errors[i].msg + '<br>';
+                    }
+                    popup.style.display = "block";
+                }
+                if (data.message) {
+                    // blog post created
+                    console.log(data.message)
+                }
+                
+            })
+            .catch(function(err) {
+                //Failure
+                console.log(err)
+            });
+            // redirect to blogs page
+            window.location.href = "http://localhost:3000/blog.html";
+        }
+
+
+        // hides a popup message
+        function toggleMessage(id) {
+            let popup = document.getElementById(id);
+            popup.style.display = "none";
+        }
+        function logout() {
+             // save jwt token in a cookie
+            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+            console.log(document.cookie)
+
+            // redirect to blogs page
+            window.location.href = "http://localhost:3000/auth.html";
+        }
+    </script>
+</html>

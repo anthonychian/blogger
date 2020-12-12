@@ -2,6 +2,7 @@ const mongo = require('./config/mongodb');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser')
 
 
 var cors = require('cors')
@@ -10,6 +11,7 @@ var blogRouter = require('./routes/api/v1/blog');
 var userRouter = require('./routes/api/v1/user');
 
 app.use(cors())
+app.use(cookieParser())
 
 mongo.connectMongoDB();
 
