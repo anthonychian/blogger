@@ -4,18 +4,14 @@
         <title>Home</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
     </head>
     <body>
         <div class="ui secondary pointing menu">
             <a id="home" class="active item">
               Home
             </a>
-            <a id="new post"class="item" href="http://localhost:3000/create_post.html">
-              New Post
-            </a>
             <a id="my posts" class="item" href="http://localhost:3000/my_posts.html">
-                My Posts
+              My Posts
             </a>
             <div class="right menu">
               <a class="ui item" onclick="logout()">
@@ -24,20 +20,22 @@
             </div>
         </div>
 
-        <div id="items"class="ui unstackable items"></div>
+        <div id="posts"class="ui four cards"></div>
 
     </body>
     <script>
         getBlogs();
+        //displayLikes();
 
+        // retrieve blog posts from all users and display them
         function getBlogs() {
-            let blogDiv = document.getElementById('items')
+            let blogDiv = document.getElementById('posts')
             fetch('/blog', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
                 }
-            }) 
+            })
             .then(response => response.json())
             .then(data => {
                 if (data.length) {
@@ -52,9 +50,20 @@
                         }) 
                         .then(response => response.json())
                         .then(data => {
-                            $res = generateBlogTemplate(blog, data[0].firstName, data[0].lastName)
-                            // console.log(res)
-                            $(blogDiv).append($res)
+                            fetch('/blog/myid', {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            }) 
+                            .then(response => response.json())
+                            .then(id => {
+                                $res = generateBlogTemplate(blog, id, data[0].firstName, data[0].lastName)
+                                $(blogDiv).append($res)
+                            })
+                            .catch(function(err) {
+                                console.log(err)
+                            });
                         })
                         .catch(function(err) {
                             console.log(err)
@@ -68,37 +77,100 @@
                     console.log(data.message)
                 }
                 else {
-                    console.log('error')
+                    console.log('No Blog Posts')
                 }
                 
             })
             .catch(function(err) {
                 //Failure
                 console.log(err)
+                window.location.href = "http://localhost:3000/auth.html";
             });
         }
 
-        function generateBlogTemplate(blog, firstName, lastName) {
-            let template  = `
-                <div class="item">
-                    <a class="ui small image">
-                        <img src="https://semantic-ui.com/images/wireframe/image.png">
-                    </a>
-                    <div class="middle aligned content">
-                        <a class="header">${blog.header}</a>
-                        <div class=description>
-                            <p>${blog.content}</p>
+        function generateBlogTemplate(blog, id, firstName, lastName) {
+            let likeText = "like icon"
+            for (let userId of blog.usersWhoLiked) {
+                if (userId == id) {
+                    likeText = "red like icon"
+                    break;
+                }
+            }
+            let template = `
+                <div class="ui card">
+                    <div class="content">
+                        <a class="header" href="http://localhost:3000/post.html?id=${blog._id}">${blog.header}</a>
+                        <div class="meta" style="font-size: 12px;">Posted by ${firstName} ${lastName} ${timeSince(blog.modifiedDate)} ago</div>                     
+                        <div class="description">
+                            <p></p>
                         </div>
-                        <div class="details">
-                            <div>Created By: ${firstName} ${lastName}</div>
-                            <div>Post last updated: ${blog.modifiedDate}</div>
-                        </div>
+                    </div>
+                    <img class="ui medium centered image"src="${blog.coverImgUrl}" style="width:300px; height:200px; object-fit:cover;">
+                    <div class="extra content"> 
+                        <span class="left floated like">
+                            <i id="likes_post_${blog._id}" class="${likeText}"data-value="${blog._id}" data-likes="${blog.likes}" onclick="likePost(this)"></i>
+                            <div id="likes_num_${blog._id}">${blog.likes} Likes</div>
+                        </span>
+                        <span class="right floated star">
+                            <i class="star icon"></i>
+                            Favorite
+                        </span>
                     </div>
                 </div>
             `
             return template;
         }
 
+        function likePost(d) {
+            let id = $(d).data('value');
+            let likes = $(d).data('likes');
+            let likeIcon = document.getElementById('likes_post_'+ id);
+            let likesNum = document.getElementById('likes_num_'+ id);
+            if (likeIcon.className == "like icon") {
+                fetch('/blog/' + id + '/like', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }) 
+                .then(response => response.json())
+                .then(data => {
+                    likeIcon.className = "red like icon"
+                    likesNum.innerHTML = data + " Likes"
+                })
+                .catch(function(err) {
+                    //Failure
+                    console.log(err)
+                });
+            }
+            else {
+                fetch('/blog/' + id + '/unlike', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }) 
+                .then(response => response.json())
+                .then(data => {
+                    likeIcon.className = "like icon"
+                    likesNum.innerHTML = data + " Likes"
+                })
+                .catch(function(err) {
+                    //Failure
+                    console.log(err)
+                });
+            }
+        }
+        function reload(id){
+            console.log(id)
+            var container = document.getElementById(id);
+            var content = container.innerHTML;
+            container.innerHTML= content; 
+            //this line is to watch the result in console , you can remove it later	
+            console.log("Refreshed");
+        }
+
+        // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
             document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
@@ -107,5 +179,39 @@
             // redirect to blogs page
             window.location.href = "http://localhost:3000/auth.html";
         }
+
+        // https://stackoverflow.com/questions/3177836/how-to-format-time-since-xxx-e-g-4-minutes-ago-similar-to-stack-exchange-site
+        function timeSince(date) {
+            var text = "";
+            var seconds = Math.floor((new Date() - new Date(date)) / 1000);
+            var interval = seconds / 31536000;
+
+            if (interval > 1) {
+                text = (1 <= interval < 2) ? "" : "s"
+                return Math.floor(interval) + " year" + text;
+            }
+            interval = seconds / 2592000;
+            if (interval > 1) {
+                text = (1 <= interval < 2) ? "" : "s"
+                return Math.floor(interval) + " month" + text;
+            }
+            interval = seconds / 86400;
+            if (interval > 1) {
+                text = (1 <= interval < 2) ? "" : "s"
+                return Math.floor(interval) + " day" + text;
+            }
+            interval = seconds / 3600;
+            if (interval > 1) {
+                text = (1 <= interval < 2) ? "" : "s"
+                return Math.floor(interval) + " hour" + text;
+            }
+            interval = seconds / 60;
+            if (interval > 1) {
+                text = (1 <= interval < 2) ? "" : "s"
+                return Math.floor(interval) + " minute" + text;
+            }
+            return Math.floor(seconds) + " seconds"
+        }
+
     </script>
 </html>

@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 module.exports = {
     connectMongoDB: function() {
         mongoose.connect(url.MONGOURL,
-        { useNewUrlParser: true, useUnifiedTopology: true  })
+        { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false })
             .then(() => {
                 console.log('Successfully connected to MongoDB Atlas!');
             })

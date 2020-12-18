@@ -14,7 +14,7 @@
                 <div id="login" class="ui vertical segment">
                     <div class="ui warning attached message">
                         <i class="icon help"></i>
-                        Don't have an account?<a class="ui right floated" href="#" onclick="showAuth()"> Register </a>
+                        Don't have an account?<a class="ui right floated" onclick="showAuth()"> Register </a>
                     </div>
                     <form class="ui form segment" onsubmit="return false">
                         <h1>Sign In</h1>
@@ -54,7 +54,7 @@
                 <div id="register" class="ui vertical segment" style="display:none">
                     <div class="ui attached warning message">
                         <i class="icon help"></i>
-                        Already signed up? <a class="ui right floated" href="#" onclick="showAuth()">Sign In</a> instead.
+                        Already signed up? <a class="ui right floated" onclick="showAuth()">Sign In</a> instead.
                     </div>
                     <form class="ui form segment"onsubmit="return false">
                         <h1>Register</h1>
@@ -86,12 +86,19 @@
                         </div>
                         <button class="ui blue button" onclick="submitRegister()" >Submit</button>
                     </form>
-                    <div id="register_message" class="ui negative message" style="display:none">
-                        <i class="close icon"onclick="toggleMessage('register_message')"></i>
+                    <div id="register_negative_message" class="ui negative message" style="display:none">
+                        <i class="close icon"onclick="toggleMessage('register_negative_message')"></i>
                         <div class="header">
                           Register Error!
                         </div>
-                        <p id="register_message_text"></p>
+                        <p id="register_negative_message_text"></p>
+                    </div>
+                    <div id="register_positive_message" class="ui positive message" style="display:none">
+                        <i class="close icon"onclick="toggleMessage('register_positive_message')"></i>
+                        <div class="header">
+                          Account Creation Successful!
+                        </div>
+                        <p id="register_positive_message_text"></p>
                     </div>
                 </div>
 
@@ -101,6 +108,13 @@
     </body>
     <script>
 
+        // get input
+        var username = document.getElementById('username_register').value;
+        var password = document.getElementById('password_register').value;
+        var email = document.getElementById('email_register').value;
+        var firstName = document.getElementById('firstName_register').value;
+        var lastName = document.getElementById('lastName_register').value;
+
         function submitLogin() {
 
             // get html elements
@@ -109,11 +123,7 @@
             let popup = document.getElementById('login_message');
             let popupText = document.getElementById('login_message_text');
 
-            // reset error values
-            popup.style.display = "none";
-            popupText.innerHTML = ""
-            usernameField.className = 'field';
-            passwordField.className = 'field';
+            clearLoginErrors();
 
             fetch('/auth/login', {
                 method: 'POST',
@@ -155,7 +165,6 @@
 
                     // save jwt token in a cookie
                     document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=1800';
-                    console.log(document.cookie)
 
                     // to delete cookie set to past date
                     // document.cookie = Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
@@ -171,79 +180,87 @@
 
         function submitRegister() {
 
+            // get input 
+            let username = document.getElementById('username_register').value;
+            let password = document.getElementById('password_register').value;
+            let email = document.getElementById('email_register').value;
+            let firstName = document.getElementById('firstName_register').value;
+            let lastName = document.getElementById('lastName_register').value;
+
             // get html elements
             let usernameField = document.getElementById('field_register_username');
             let passwordField = document.getElementById('field_register_password');
             let emailField = document.getElementById('field_register_email');
             let firstNameField = document.getElementById('field_register_firstName');
             let lastNameField = document.getElementById('field_register_lastName');
-            let popup = document.getElementById('register_message');
-            let popupText = document.getElementById('register_message_text');
+            let popup = document.getElementById('register_negative_message');
+            let popupText = document.getElementById('register_negative_message_text');
+            let success = document.getElementById('register_positive_message');
+            let successText = document.getElementById('register_positive_message_text');
 
-            // reset error values
-            popup.style.display = "none";
-            popupText.innerHTML = ""
-            usernameField.className = 'field';
-            passwordField.className = 'field';
-            emailField.className = 'field';
-            firstNameField.className = 'field';
-            lastNameField.className = 'field';
+            clearRegisterErrors();
+            
+            if (!checkInvalidCharacters()) {
 
-            fetch('/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    username: document.getElementById('username_register').value, 
-                    password: document.getElementById('password_register').value,
-                    email: document.getElementById('email_register').value, 
-                    firstName: document.getElementById('firstName_register').value, 
-                    lastName: document.getElementById('lastName_register').value
+                fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        username, 
+                        password,
+                        email, 
+                        firstName, 
+                        lastName
+                    }) 
                 }) 
-            }) 
-            .then(response => response.json())
-            .then(data => {
-                if (data.errors) {
-                    for (let i = 0; i < data.errors.length; i++) {
-                        switch(data.errors[i].param) {
-                            case 'username':
-                                usernameField.className = 'field error';
-                                break;
-                            case 'password':
-                                passwordField.className = 'field error';
-                                break;
-                            case 'email':
-                                emailField.className = 'field error';
-                                break;
-                            case 'firstName':
-                                firstNameField.className = 'field error';
-                                break;
-                            case 'lastName':
-                                lastNameField.className = 'field error';
-                                break;
-                            default:
+                .then(response => response.json())
+                .then(data => {
+                    if (data.errors) {
+                        for (let i = 0; i < data.errors.length; i++) {
+                            switch(data.errors[i].param) {
+                                case 'username':
+                                    usernameField.className = 'field error';
+                                    break;
+                                case 'password':
+                                    passwordField.className = 'field error';
+                                    break;
+                                case 'email':
+                                    emailField.className = 'field error';
+                                    break;
+                                case 'firstName':
+                                    firstNameField.className = 'field error';
+                                    break;
+                                case 'lastName':
+                                    lastNameField.className = 'field error';
+                                    break;
+                                default:
+                            }
+                            popupText.innerHTML += data.errors[i].msg + '<br>';
                         }
-                        popupText.innerHTML += data.errors[i].msg + '<br>';
+                        // display error message
+                        popup.style.display = "block";
                     }
-                    // display error message
-                    popup.style.display = "block";
-                }
-                else if (data.invalid_credentials) {
-                    // display error message
-                    popupText.innerHTML = data.invalid_credentials;
-                    popup.style.display = "block";
-                }
-                if (data.message) {
-                    // account created
-                    console.log(data.message)
-                }
-                
-            })
-            .catch(function(err) {
-                //Failure
-                console.log(err)
-            });
+                    else if (data.invalid_credentials) {
+                        // display error message
+                        popupText.innerHTML = data.invalid_credentials;
+                        popup.style.display = "block";
+                    }
+                    if (data.message) {
+                        // account created
+                        console.log(data.message)
+                        clearRegisterInput();
+                        successText.innerHTML = 'Please Login to continue.'
+                        success.style.display = "block";
+                    }
+                    
+                })
+                .catch(function(err) {
+                    //Failure
+                    console.log(err)
+                });
+            }
         }
 
 
@@ -258,12 +275,149 @@
             let x = document.getElementById("login");
             let y = document.getElementById("register");
             if (x.style.display === "none") {
+                clearRegisterErrors();
+                clearRegisterInput();
                 x.style.display = "block";
                 y.style.display = "none"
             } else {
+                clearLoginErrors();
+                clearLoginInput();
                 x.style.display = "none";
                 y.style.display = "block";
             }
         }
+
+        function clearRegisterErrors() {
+            // reset error values
+            document.getElementById('register_positive_message').style.display = "none";
+            document.getElementById('register_positive_message_text').innerHTML = ""
+            document.getElementById('register_negative_message').style.display = "none";
+            document.getElementById('register_negative_message_text').innerHTML = ""
+            document.getElementById('field_register_username').className = 'field';
+            document.getElementById('field_register_password').className = 'field';
+            document.getElementById('field_register_email').className = 'field';
+            document.getElementById('field_register_firstName').className = 'field';
+            document.getElementById('field_register_lastName').className = 'field';
+        }
+
+        function clearLoginErrors() {
+            // reset error values
+            document.getElementById('login_message').style.display = "none";
+            document.getElementById('login_message_text').innerHTML = ""
+            document.getElementById('field_login_username').className = 'field';
+            document.getElementById('field_login_password').className = 'field';
+        }
+
+        function clearRegisterInput() {
+            document.getElementById('username_register').value = '';
+            document.getElementById('password_register').value = '';
+            document.getElementById('email_register').value = '';
+            document.getElementById('firstName_register').value = '';
+            document.getElementById('lastName_register').value = '';
+        }
+        function clearLoginInput() {
+            document.getElementById('username_login').value = '';
+            document.getElementById('password_login').value = '';
+        }
+
+        function checkInput(str) {
+            const regex = /[^a-z0-9 \n\.,~!@#$%^&*+='":()_–-]/gim;
+            if (str.match(regex)) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+        function getInvalidChars(str) {
+            const regex = /[^a-z0-9 \n\.,~!@#$%^&*+='":()_–-]/gim;
+            let matches = [...str.matchAll(regex)];
+            return matches;
+        }
+
+        function checkInvalidCharacters() {
+            // get input 
+            let username = document.getElementById('username_register').value;
+            let password = document.getElementById('password_register').value;
+            let email = document.getElementById('email_register').value;
+            let firstName = document.getElementById('firstName_register').value;
+            let lastName = document.getElementById('lastName_register').value;
+
+             // get html elements
+             let usernameField = document.getElementById('field_register_username');
+            let passwordField = document.getElementById('field_register_password');
+            let emailField = document.getElementById('field_register_email');
+            let firstNameField = document.getElementById('field_register_firstName');
+            let lastNameField = document.getElementById('field_register_lastName');
+            let popup = document.getElementById('register_negative_message');
+            let popupText = document.getElementById('register_negative_message_text');
+
+            // check if input contains invalid characters and display message
+            if (checkInput(username) || checkInput(password) || checkInput(email) 
+                || checkInput(firstName) || checkInput(lastName)) {
+
+                let res = ''
+                if (checkInput(username)) {
+                    usernameField.className = 'field error';
+                    let invalidCharsUsername = getInvalidChars(username);
+                    for (let i = 0; i < invalidCharsUsername.length; i++) {
+                        if (res.length > 5) {
+                            break;
+                        }
+                        res += invalidCharsUsername[i][0];
+                    }
+                }
+                if (checkInput(password)) {
+                    passwordField.className = 'field error';
+                    let invalidCharsPassword = getInvalidChars(password);
+                    for (let i = 0; i < invalidCharsPassword.length; i++) {
+                        if (res.length > 5) {
+                            break;
+                        }
+                        res += invalidCharsPassword[i][0];
+                    }
+                }
+                if (checkInput(email)) {
+                    emailField.className = 'field error';
+                    let invalidCharsEmail = getInvalidChars(email);
+                    for (let i = 0; i < invalidCharsEmail.length; i++) {
+                        if (res.length > 5) {
+                            break;
+                        }
+                        res += invalidCharsEmail[i][0];
+                    }
+                }
+                if (checkInput(firstName)) {
+                    firstNameField.className = 'field error';
+                    let invalidCharsFirstName = getInvalidChars(firstName);
+                    for (let i = 0; i < invalidCharsFirstName.length; i++) {
+                        if (res.length > 5) {
+                            break;
+                        }
+                        res += invalidCharsFirstName[i][0];
+                    }
+                }
+                if (checkInput(lastName)) {
+                    lastNameField.className = 'field error';
+                    let invalidCharsLastName = getInvalidChars(lastName);
+                    for (let i = 0; i < invalidCharsLastName.length; i++) {
+                        if (res.length > 5) {
+                            break;
+                        }
+                        res += invalidCharsLastName[i][0];
+                    }
+                }
+                if (res.length > 5) {
+                    res += '...'
+                }
+                popupText.innerHTML = 'Invalid character(s):  '  + res  +   '<br>';
+                popup.style.display = "block";
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
     </script>
 </html>

@@ -1,7 +1,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>New Blog Post </title>
+        <title>Modify Blog Post </title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     </head>
@@ -24,15 +24,15 @@
 
                 
                 <!-- BLOG POST SECTION -->
-                <div id="create_post" class="ui vertical segment">
+                <div id="modify_post" class="ui vertical segment">
                     <form class="ui form segment"onsubmit="return false">
-                        <h1>New Blog Post</h1>
+                        <h1>Modify Blog Post</h1>
                         <div class="ui hidden divider"></div>
                         <div id="field_header" class="field">
                             <label>Header</label>
                             <div id="header_word_count" class="ui label">
                                 Word Count
-                                <div id= "header_word_count_number" class="detail">0/100</div>
+                                <div id= "header_word_count_number" class="detail"></div>
                             </div>
                             <div class="field">
                                 <input id="header_text"onclick="characterCount('header_text','header_word_count_number', 100 )">
@@ -43,7 +43,7 @@
                             <label>Content</label>
                             <div id="content_word_count" class="ui label">
                                 Word Count
-                                <div id= "content_word_count_number" class="detail">0/10000</div>
+                                <div id= "content_word_count_number" class="detail"></div>
                             </div>
                             <div class="field">
                                 <textarea id="content_text" onclick="characterCount('content_text','content_word_count_number', 10000 )"></textarea>
@@ -73,19 +73,13 @@
     </body>
     <script>
         loggedIn();
+        getBlogInfo();
 
         function submitPost() {
-            
-            // get input
-            let header = document.getElementById('header_text').value
-            let content = document.getElementById('content_text').value
-            let coverImgUrl = document.getElementById('cover_text').value
-
             // get html elements
             let contentField = document.getElementById('field_content');
             let headerField = document.getElementById('field_header');
             let coverField = document.getElementById('field_cover');
-
             let popup = document.getElementById('create_post_message');
             let popupText = document.getElementById('create_post_message_text');
 
@@ -94,41 +88,39 @@
             headerField.className = 'field';
             coverField.className = 'field';
             popup.style.display = "none";
-            popupText.innerHTML = ""
+            popupText.innerHTML = "";
 
-            // check if input contains invalid characters and display message
+            // check input
+            let header = document.getElementById('header_text').value
+            let content = document.getElementById('content_text').value
+            let coverImgUrl = document.getElementById('cover_text').value
             if (checkInput(header) || checkInput(content)) {
                 headerField.className = 'field error';
                 contentField.className = 'field error';
                 let invalidCharsHeader = getInvalidChars(header);
                 let invalidCharsContent = getInvalidChars(content);
+                console.log(104,invalidCharsContent[1][0])
                 let res = ''
                 for (let i = 0; i < invalidCharsHeader.length; i++) {
-                    res += invalidCharsHeader[i][0] + ' ';
-                    if (res.length > 5) {
-                        break;
-                    }
+                    res += invalidCharsHeader[i][0] + ' '
                 }
                 for (let i = 0; i < invalidCharsContent.length; i++) {
-                    res += invalidCharsContent[i][0] + ' ';
-                    if (res.length > 5) {
-                        break;
-                    }
+                    res += invalidCharsContent[i][0] + ' '
                 }
-                popupText.innerHTML = 'Invalid character(s) ' + res +  '<br>';
+                popupText.innerHTML = 'Invalid character(s):  ' + res +  '<br>';
                 popup.style.display = "block";
             }
             else {
-                fetch('/blog/create', {
-                    method: 'POST',
+                fetch('/blog/' + getParameterByName('id'), {
+                    method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ 
-                        header,
-                        content,
+                        header: header,
+                        content: content,
                         coverImgUrl
-                    }) 
+                    })
                 }) 
                 .then(response => response.json())
                 .then(data => {
@@ -163,7 +155,45 @@
                     console.log(err)
                 });
             }
+        }
 
+        // display contents of blog in input fields
+        function getBlogInfo() {
+            fetch('/blog/'+ getParameterByName('id'), {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }) 
+            .then(response => response.json())
+            .then(blog => {
+                if (blog.header) {
+                    console.log(104)
+                    document.getElementById('header_text').value = blog.header;
+                    document.getElementById('content_text').value = blog.content;
+                    document.getElementById('cover_text').value = blog.coverImgUrl;
+                    document.getElementById('header_word_count_number').innerHTML = blog.header.length + '/100';
+                    document.getElementById('content_word_count_number').innerHTML = blog.content.length + '/10000';
+                }
+                else {
+                    console.log(account.message)
+                }
+                
+            })
+            .catch(function(err) {
+                console.log(err)
+            });
+        }
+
+        // from https://stackoverflow.com/questions/53757395/how-to-pass-variable-on-href
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
         
         // counts the characters that the user has currently inputed
@@ -206,6 +236,7 @@
                 window.location.href = "http://localhost:3000/auth.html";
             });
         }
+
         function checkInput(str) {
             const regex = /[^a-z0-9 \n\.,~!@#$%^&*+=?'":()_–-]/gim;
             if (str.match(regex)) {
@@ -220,6 +251,7 @@
             let matches = [...str.matchAll(regex)];
             return matches;
         }
+
 
     </script>
 </html>

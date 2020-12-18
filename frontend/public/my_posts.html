@@ -4,18 +4,14 @@
         <title>My Blog Posts</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.js"></script>
     </head>
     <body>
         <div class="ui secondary pointing menu">
             <a id="home"class="item" href="http://localhost:3000/blog.html">
-                Home
-              </a>
-            <a id="new post"class="item" href="http://localhost:3000/create_post.html">
-              New Post
+              Home
             </a>
             <a id="my posts" class="active item">
-                My Posts
+              My Posts
             </a>
             <div class="right menu">
               <a class="ui item" onclick="logout()">
@@ -23,13 +19,21 @@
               </a>
             </div>
         </div>
-
+        <div class="ui center aligned segment">
+            <div class="ui hidden divider"></div>
+            <a class="ui blue labeled icon large button" href="http://localhost:3000/create_post.html">
+                Create New Post
+                <i class="add icon"></i>
+            </a>
+            <div class="ui hidden divider"></div>
+        </div>
         <div id="items"class="ui unstackable items"></div>
 
     </body>
     <script>
         getBlogs();
 
+        // retrieve blog posts from the user that is logged on and display them
         function getBlogs() {
             let blogDiv = document.getElementById('items')
             fetch('/blog/myposts', {
@@ -43,22 +47,8 @@
                 if (data.length) {
                     let $res = '';
                     for (let blog of data) {
-                        
-                        fetch('/auth/findById/' + blog.userId, {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        }) 
-                        .then(response => response.json())
-                        .then(data => {
-                            $res = generateBlogTemplate(blog, data[0].firstName, data[0].lastName)
-                            // console.log(res)
-                            $(blogDiv).append($res)
-                        })
-                        .catch(function(err) {
-                            console.log(err)
-                        });
+                        $res = generateBlogTemplate(blog)
+                        $(blogDiv).append($res)
                     }
                 }
                 else if (data.error) {
@@ -68,28 +58,34 @@
                     console.log(data.message)
                 }
                 else {
-                    console.log('error')
+                    console.log('No Blog Posts')
                 }
                 
             })
             .catch(function(err) {
                 //Failure
                 console.log(err)
+                window.location.href = "http://localhost:3000/auth.html";
             });
         }
-        function generateBlogTemplate(blog, firstName, lastName) {
+        function generateBlogTemplate(blog) {
             let template  = `
                 <div class="item">
                     <a class="ui small image">
-                        <img src="https://semantic-ui.com/images/wireframe/image.png">
+                        <img src="${blog.coverImgUrl}">
                     </a>
                     <div class="middle aligned content">
-                        <a class="header">${blog.header}</a>
-                        <div class=description>
-                            <p>${blog.content}</p>
+                        <div>
+                            <button class="ui circular right floated icon button" data-value="${blog._id}" onclick="deletePost(this)">
+                                <i class="icon trash"></i>
+                            </button>
+                            <a class="ui circular right floated icon button" href="http://localhost:3000/modify_post.html?id=${blog._id}">
+                                <i class="icon edit"></i>
+                            </a>
                         </div>
+                        <a class="header" href="http://localhost:3000/post.html?id=${blog._id}">${blog.header}</a>
+                        <div class="ui hidden divider"></div>
                         <div class="details">
-                            <div>Created By: ${firstName} ${lastName}</div>
                             <div>Post last updated: ${blog.modifiedDate}</div>
                         </div>
                     </div>
@@ -98,6 +94,33 @@
             return template;
         }
 
+        function deletePost(d) {
+            let id = $(d).data('value')
+            fetch('/blog/' + id, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    // blog post deleted
+                    // popupText.innerHTML = 'Blog post deleted';
+                    // popup.style.display = "block";
+                    // redirect to my posts page
+                    window.location.href = "http://localhost:3000/my_posts.html";
+                }
+                if (data.error) {
+                    console.log(data.error)
+                }
+            })
+            .catch(function(err) {
+                //Failure
+                console.log(140,err)
+            });
+        }
+        // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
             document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';

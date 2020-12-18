@@ -1,0 +1,137 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title></title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.4.1/semantic.min.css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    </head>
+    <body>
+        <div class="ui secondary pointing menu">
+            <a id="home" class="item" href="http://localhost:3000/blog.html">
+              Home
+            </a>
+            <a id="my posts" class="item" href="http://localhost:3000/my_posts.html">
+              My Posts
+            </a>
+            <div class="right menu">
+              <a class="ui item" onclick="logout()">
+                Logout
+              </a>
+            </div>
+        </div>
+
+        <div id="items"class="ui unstackable items"></div>
+
+    </body>
+    <script>
+        loggedIn();
+        getPost();
+        
+        function getPost() {
+            let id = getParameterByName('id')
+            let blogDiv = document.getElementById('items')
+            fetch('/blog/'+ id, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }) 
+            .then(response => response.json())
+            .then(blog => {
+                if (blog.header) {
+                    fetch('/auth/findById/' + blog.userId, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }) 
+                        .then(response => response.json())
+                        .then(account => {
+                            let $res = generateBlogTemplate(blog, account[0].firstName, account[0].lastName)
+                            document.title = blog.header;
+                            $(blogDiv).append($res)
+                        })
+                        .catch(function(err) {
+                            console.log(err)
+                        });
+                }
+                else {
+                    console.log(account.message)
+                }
+                
+            })
+            .catch(function(err) {
+                console.log(err)
+            });
+
+        }
+
+        function generateBlogTemplate(blog, firstName, lastName) {
+            let template  = `
+                <div class="ui center aligned segment">
+                    <a class="ui huge header">${blog.header}</a>
+                    <div class="content">
+                        <div class="details">
+                            <div>Created By: ${firstName} ${lastName}</div>
+                            <div>Post last updated: ${blog.modifiedDate}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="ui center aligned segment">
+                    <div class="content">
+                        <a class="ui fluid image">
+                            <img src="${blog.coverImgUrl}">
+                        </a>
+                    </div>
+                </div>
+                <div class="ui center aligned segment">
+                    <div class="content">
+                        <div class=blog_text>
+                            <p>${blog.content}</p>
+                        </div>
+                    </div>
+                </div>
+            `
+            return template;
+        }
+
+        // from https://stackoverflow.com/questions/53757395/how-to-pass-variable-on-href
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+        // deletes cookie and redirects user back to login
+        function logout() {
+             // save jwt token in a cookie
+            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+            console.log(document.cookie)
+
+            // redirect to blogs page
+            window.location.href = "http://localhost:3000/auth.html";
+        }
+        // check if the user is logged in and redirect back to login page
+        function loggedIn() {
+            fetch('/auth/loggedIn', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                console.log(data)
+            })
+            .catch(function(err) {
+                console.log(err)
+                // redirect to login page
+                window.location.href = "http://localhost:3000/auth.html";
+            });
+        }
+
+    </script>
+</html>
