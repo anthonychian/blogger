@@ -20,12 +20,14 @@
             </div>
         </div>
 
-        <div id="posts"class="ui four cards"></div>
+        <div class="ui column grid container">
+            <div class="column"></div>
+            <div id="posts"class="ui four cards"></div>
+        </div>
 
     </body>
     <script>
         getBlogs();
-        //displayLikes();
 
         // retrieve blog posts from all users and display them
         function getBlogs() {
@@ -98,28 +100,37 @@
             }
             let template = `
                 <div class="ui card">
+                    <a class="ui image" href="http://localhost:3000/post.html?id=${blog._id}">
+                        <img src="${blog.coverImgUrl}" style="width:300px; height:200px; object-fit:cover; object-position: center top; background-color: white;">
+                    </a>
+                    
                     <div class="content">
-                        <a class="header" href="http://localhost:3000/post.html?id=${blog._id}">${blog.header}</a>
-                        <div class="meta" style="font-size: 12px;">Posted by ${firstName} ${lastName} ${timeSince(blog.modifiedDate)} ago</div>                     
-                        <div class="description">
-                            <p></p>
-                        </div>
+                        <a class="ui small header" href="http://localhost:3000/post.html?id=${blog._id}">${blog.header}</a>
                     </div>
-                    <img class="ui medium centered image"src="${blog.coverImgUrl}" style="width:300px; height:200px; object-fit:cover;">
-                    <div class="extra content"> 
-                        <span class="left floated like">
-                            <i id="likes_post_${blog._id}" class="${likeText}"data-value="${blog._id}" data-likes="${blog.likes}" onclick="likePost(this)"></i>
-                            <div id="likes_num_${blog._id}">${blog.likes} Likes</div>
+                    
+                    <div class="extra"> 
+                        <span class="left floated">
+                            <div class="meta" style="font-size: 12px;">${firstName} ${lastName} ${timeSince(blog.modifiedDate)} ago</div>
                         </span>
-                        <span class="right floated star">
-                            <i class="star icon"></i>
-                            Favorite
+                       
+                        <span class="right floated">
+                            <div id="likes_num_${blog._id}">
+                                ${blog.likes} 
+                            </div>
                         </span>
+                        <span class="right floated">
+                            <i id="likes_post_${blog._id}" class="${likeText}"data-value="${blog._id}" data-likes="${blog.likes}" onclick="likePost(this)"> </i>
+                        </span>
+                        
                     </div>
                 </div>
             `
             return template;
         }
+        // <span class="right floated star">
+        //     <i class="star icon"></i>
+        //     Favorite
+        // </span>
 
         function likePost(d) {
             let id = $(d).data('value');
@@ -136,7 +147,8 @@
                 .then(response => response.json())
                 .then(data => {
                     likeIcon.className = "red like icon"
-                    likesNum.innerHTML = data + " Likes"
+                    //$(likesNum).text(data)
+                    likesNum.textContent = data;
                 })
                 .catch(function(err) {
                     //Failure
@@ -153,7 +165,7 @@
                 .then(response => response.json())
                 .then(data => {
                     likeIcon.className = "like icon"
-                    likesNum.innerHTML = data + " Likes"
+                    likesNum.textContent = data;
                 })
                 .catch(function(err) {
                     //Failure
@@ -161,19 +173,11 @@
                 });
             }
         }
-        function reload(id){
-            console.log(id)
-            var container = document.getElementById(id);
-            var content = container.innerHTML;
-            container.innerHTML= content; 
-            //this line is to watch the result in console , you can remove it later	
-            console.log("Refreshed");
-        }
 
         // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
-            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+            document.cookie = 'token=N/A; max-age=0;';
             console.log(document.cookie)
 
             // redirect to blogs page
@@ -187,27 +191,27 @@
             var interval = seconds / 31536000;
 
             if (interval > 1) {
-                text = (1 <= interval < 2) ? "" : "s"
+                text = (interval < 2) ? "" : "s"
                 return Math.floor(interval) + " year" + text;
             }
             interval = seconds / 2592000;
             if (interval > 1) {
-                text = (1 <= interval < 2) ? "" : "s"
+                text = (interval < 2) ? "" : "s"
                 return Math.floor(interval) + " month" + text;
             }
             interval = seconds / 86400;
             if (interval > 1) {
-                text = (1 <= interval < 2) ? "" : "s"
+                text = (interval < 2) ? "" : "s"
                 return Math.floor(interval) + " day" + text;
             }
             interval = seconds / 3600;
             if (interval > 1) {
-                text = (1 <= interval < 2) ? "" : "s"
+                text = (interval < 2) ? "" : "s"
                 return Math.floor(interval) + " hour" + text;
             }
             interval = seconds / 60;
             if (interval > 1) {
-                text = (1 <= interval < 2) ? "" : "s"
+                text = (interval < 2) ? "" : "s"
                 return Math.floor(interval) + " minute" + text;
             }
             return Math.floor(seconds) + " seconds"

@@ -1,3 +1,4 @@
+require('dotenv').config()
 const express = require('express');
 const router = express.Router();
 const Blog = require('../../../models/blog');
@@ -5,6 +6,21 @@ const Account = require('../../../models/account');
 const verify = require('../../../middleware/verify');
 const { check, validationResult } = require('express-validator'); 
 
+const cloudinary = require('cloudinary')
+
+cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET
+})
+
+router.get('/getUploadInfo', (req, res) => { 
+    let info = {
+        cloudUrl: process.env.CLOUD_URL,
+        uploadPreset: process.env.UPLOAD_PRESET
+    }
+    return res.status(200).json(info);
+});
 
 // display only users posts
 router.get('/myposts', verify.authenticateToken, async (req, res) => {
@@ -99,6 +115,38 @@ router.get('/:id', verify.authenticateToken, async (req, res) => {
     }
 });
 
+// router.post('/uploadImg', async (req, res) => { 
+//     try {
+//         if (req.files) {
+//             var file = req.files.img
+            
+//             // cloudinary.v2.uploader.upload(file, function(error, result) {
+//             //     console.log(result, error); 
+//             // });
+//         }
+//     }
+//     catch(error) {
+//         console.log(130, error)
+//         return res.status(500).send(error)
+//     }
+// });
+
+
+router.post('/deleteImg', async (req, res) => { 
+    try {
+        const {public_id} = req.body
+
+        cloudinary.v2.uploader.destroy(public_id, function(error,result) {
+            console.log(result, error) 
+        });
+    }
+    catch(error) {
+        console.log(130, error)
+        return res.status(500).send(error)
+    }
+});
+
+
 // create a new blog
 router.post('/create', verify.authenticateToken, [
     check('header')
@@ -108,7 +156,7 @@ router.post('/create', verify.authenticateToken, [
         .not().isEmpty().withMessage('Content is required')
         .isLength({ max: 10000 }).withMessage('Content limit cannot exceed 10000 characters'),
     check('coverImgUrl')
-        .isURL().withMessage('Invalid URL link'),
+        .isURL().withMessage('Invalid file'),
 ], 
     async (req, res) => { 
         try {
@@ -126,8 +174,7 @@ router.post('/create', verify.authenticateToken, [
             }
 
             const userId = req.user.user.id
-            const {header, content, coverImgUrl} = req.body
-
+            const {header, content, coverImgUrl, dateNow} = req.body
             // let {headerInput, contentInput} = req.body
 
             // // sanitize body
@@ -139,14 +186,16 @@ router.post('/create', verify.authenticateToken, [
                 userId,
                 header,
                 content,
-                coverImgUrl
+                coverImgUrl,
+                createdDate: dateNow,
+                modifiedDate: dateNow,
             });
 
             await blog.save()
             .then(
                 () => {
                     return res.status(201).json({
-                        message: 'Blog post created'
+                        message: 'Blog post created ' + dateNow
                     });
                 }
             ).catch(
@@ -189,8 +238,8 @@ router.put('/:id', verify.authenticateToken, [
                 return res.status(400).json({ errors: errors.array() });
             }
 
-            const date = new Date();
-            const {header, content, coverImgUrl} = req.body
+            //const dateNow = new Date();
+            const {header, content, coverImgUrl, dateNow} = req.body
 
             // let {headerInput, contentInput} = req.body
 
@@ -204,13 +253,14 @@ router.put('/:id', verify.authenticateToken, [
                     header,
                     content,
                     coverImgUrl,
-                    modifiedDate: date
+                    modifiedDate: dateNow
                 }
             )
             .then(
                 () => {
+                    console.log(261, dateNow)
                     return res.status(201).json({
-                        message: 'Blog post updated ' + date
+                        message: 'Blog post updated ' + dateNow
                     });
                 }
             ).catch(

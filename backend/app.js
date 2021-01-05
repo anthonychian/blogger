@@ -3,6 +3,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser')
+const fileUpload = require('express-fileupload');
 const expressSanitizer = require('express-sanitizer');
 
 
@@ -19,6 +20,9 @@ mongo.connectMongoDB();
 app.use(express.json({extended: false}))
 app.use(express.static('../frontend/public'))
 app.use(bodyParser.urlencoded({extended: false}))
+app.use(fileUpload({
+    createParentPath: true
+}));
 //app.use(expressSanitizer());
 
 app.use('/auth', authRouter);

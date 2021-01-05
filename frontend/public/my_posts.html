@@ -19,7 +19,7 @@
               </a>
             </div>
         </div>
-        <div class="ui center aligned segment">
+        <div class="ui center aligned container">
             <div class="ui hidden divider"></div>
             <a class="ui blue labeled icon large button" href="http://localhost:3000/create_post.html">
                 Create New Post
@@ -71,12 +71,12 @@
         function generateBlogTemplate(blog) {
             let template  = `
                 <div class="item">
-                    <a class="ui small image">
-                        <img src="${blog.coverImgUrl}">
+                    <a class="ui image" href="http://localhost:3000/post.html?id=${blog._id}">
+                        <img src="${blog.coverImgUrl}" style="width:300px; height:200px; object-fit:cover; object-position: center top;background-color: white;">
                     </a>
                     <div class="middle aligned content">
                         <div>
-                            <button class="ui circular right floated icon button" data-value="${blog._id}" onclick="deletePost(this)">
+                            <button class="ui circular right floated icon button" data-id-value="${blog._id}" data-header-value="${blog.header}" data-date-value="${blog.modifiedDate}" onclick="deletePost(this)">
                                 <i class="icon trash"></i>
                             </button>
                             <a class="ui circular right floated icon button" href="http://localhost:3000/modify_post.html?id=${blog._id}">
@@ -95,7 +95,11 @@
         }
 
         function deletePost(d) {
-            let id = $(d).data('value')
+            let id = $(d).data('id-value')
+            let header = $(d).data('header-value')
+            let date = new Date($(d).data('date-value'))
+            let public_id = header + "_" + date.toISOString();
+            console.log(public_id)
             fetch('/blog/' + id, {
                 method: 'DELETE',
                 headers: {
@@ -105,10 +109,27 @@
             .then(response => response.json())
             .then(data => {
                 if (data.message) {
+                    fetch('/blog/deleteImg', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            public_id
+                        }) 
+                    }) 
+                    .then(response => response.json())
+                    .then(success => {
+                        console.log(106, success)
+                    })
+                    .catch(function(err) {
+                        console.log(110,err)
+                    });
                     // blog post deleted
                     // popupText.innerHTML = 'Blog post deleted';
                     // popup.style.display = "block";
                     // redirect to my posts page
+
                     window.location.href = "http://localhost:3000/my_posts.html";
                 }
                 if (data.error) {
@@ -123,7 +144,7 @@
         // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
-            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+             document.cookie = 'token=N/A; max-age=0;';
             console.log(document.cookie)
 
             // redirect to blogs page

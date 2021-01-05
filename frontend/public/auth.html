@@ -78,12 +78,12 @@
                             <label>Password</label>
                             <input type="password" id="password_register" placeholder="Password">
                         </div>
-                        <div class="inline field">
+                        <!-- <div class="inline field">
                             <div class="ui checkbox">
                               <input type="checkbox" id="terms">
                               <label for="terms">I agree to the terms and conditions</label>
                             </div>
-                        </div>
+                        </div> -->
                         <button class="ui blue button" onclick="submitRegister()" >Submit</button>
                     </form>
                     <div id="register_negative_message" class="ui negative message" style="display:none">
@@ -114,6 +114,8 @@
         var email = document.getElementById('email_register').value;
         var firstName = document.getElementById('firstName_register').value;
         var lastName = document.getElementById('lastName_register').value;
+
+
 
         function submitLogin() {
 
@@ -164,7 +166,15 @@
                     window.location.href = "http://localhost:3000/blog.html";
 
                     // save jwt token in a cookie
-                    document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=1800';
+
+                    // signed in for 1 day
+                    if (document.getElementById('stay_signed_in').checked) {
+                        document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=86400';
+                    }
+                    // signed in for 30 minutes
+                    else {
+                        document.cookie = 'token=' + data.accessToken + '; domain=localhost; Path=/; max-age=1800';
+                    }
 
                     // to delete cookie set to past date
                     // document.cookie = Expires=Thu, 01 Jan 1900 00:00:00 GMT;';

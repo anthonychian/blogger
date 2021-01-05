@@ -50,14 +50,23 @@
                             </div>
                         </div>
                         <div class="ui hidden divider"></div>
-                        <div id="field_cover" class="field">
+                        <!-- <div id="field_cover" class="field">
                             <label>Cover Photo (URL link)</label>
                             <div class="field">
                                 <input id="cover_text">
                             </div>
                         </div>
+                        <div class="ui hidden divider"></div> -->
+                        <div id="image_container" class="field">
+                            <label>Update Image</label>
+                            <input id="file_upload" name="file_upload" type="file">
+                        </div>
+                        <div class="field">
+                            <label>Current Image</label>
+                            <img class="ui small image"id="image_preview" src="">
+                        </div>
                         <div class="ui hidden divider"></div>
-                        <button class="ui blue button" onclick="submitPost()"><i class="icon edit"></i>Submit</button>
+                        <button id="submit_button" class="ui blue button" onclick="submitPost()"><i class="icon edit"></i>Submit</button>
                     </form>
                     <div id="create_post_message" class="ui negative message" style="display:none">
                         <i class="close icon"onclick="toggleMessage('create_post_message')"></i>
@@ -73,33 +82,90 @@
     </body>
     <script>
         loggedIn();
+        let currentImg = "";
+        let imgId = "";
         getBlogInfo();
+
+        var file = new File([""], "filename");
+        let fileUpload = document.getElementById("file_upload");
+        let imgPreview = document.getElementById("image_preview");
+        let submitButton = document.getElementById("submit_button");
+        let headerElement = document.getElementById('header_text');
+        let contentElement = document.getElementById('content_text');
+
+        fileUpload.addEventListener('change', function onChange(event) {
+            if (fileUpload.value) {
+                file = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    console.log(file);
+                    imgPreview.src = reader.result;
+                };
+                //reader.readAsText(file);
+                reader.readAsDataURL(file);
+            }
+            else {
+                imgPreview.src = currentImg;
+            }
+            if (headerElement.value && contentElement.value) {
+                submitButton.className = "ui blue button";
+            }
+            else {
+                submitButton.className = "ui disabled blue button";
+            }
+         })
+
+        headerElement.addEventListener('change', function onChange(event) {
+            if (contentElement.value && headerElement.value) {
+                submitButton.className = "ui blue button";
+            }
+            else {
+                submitButton.className = "ui disabled blue button";
+            }
+        })
+
+        contentElement.addEventListener('change', function onChange(event) {
+            if (headerElement.value && contentElement.value) {
+                submitButton.className = "ui blue button";
+            }
+            else {
+                submitButton.className = "ui disabled blue button";
+            }
+        })
+
+        
 
         function submitPost() {
             // get html elements
             let contentField = document.getElementById('field_content');
             let headerField = document.getElementById('field_header');
-            let coverField = document.getElementById('field_cover');
             let popup = document.getElementById('create_post_message');
             let popupText = document.getElementById('create_post_message_text');
 
             // reset error values
             contentField.className = 'field';
             headerField.className = 'field';
-            coverField.className = 'field';
             popup.style.display = "none";
             popupText.innerHTML = "";
 
-            // check input
+            // check input and displays invalid characters contained in header/content
             let header = document.getElementById('header_text').value
             let content = document.getElementById('content_text').value
-            let coverImgUrl = document.getElementById('cover_text').value
-            if (checkInput(header) || checkInput(content)) {
+            if (header.length > 100) {
+                headerField.className = 'field error';
+                popupText.innerHTML = 'Header limit cannot exceed 100 characters';
+                popup.style.display = "block";
+            }
+            else if (content.length > 10000) {
+                contentField.className = 'field error';
+                popupText.innerHTML = 'Content limit cannot exceed 10000 characters';
+                popup.style.display = "block";
+            }
+            else if (checkInput(header) || checkInput(content)) {
                 headerField.className = 'field error';
                 contentField.className = 'field error';
                 let invalidCharsHeader = getInvalidChars(header);
                 let invalidCharsContent = getInvalidChars(content);
-                console.log(104,invalidCharsContent[1][0])
                 let res = ''
                 for (let i = 0; i < invalidCharsHeader.length; i++) {
                     res += invalidCharsHeader[i][0] + ' '
@@ -111,49 +177,160 @@
                 popup.style.display = "block";
             }
             else {
-                fetch('/blog/' + getParameterByName('id'), {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        header: header,
-                        content: content,
-                        coverImgUrl
-                    })
-                }) 
-                .then(response => response.json())
-                .then(data => {
-                    if (data.errors) {
-                        for (let i = 0; i < data.errors.length; i++) {
-                            switch(data.errors[i].param) {
-                                case 'header':
-                                    headerField.className = 'field error';
-                                    break;
-                                case 'content':
-                                    contentField.className = 'field error';
-                                    break;
-                                case 'coverImgUrl':
-                                    coverField.className = 'field error';
-                                    break;
-                                default:
+                // header and content are both modified but not cover image
+                if (imgPreview.src == currentImg) {
+                    // console.log(170, header)
+                    // console.log(171, content)
+                    // console.log(172, currentImg)
+                    let dateNow = new Date();
+                    fetch('/blog/' + getParameterByName('id'), {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            header,
+                            content,
+                            coverImgUrl: currentImg,
+                            dateNow 
+                        })
+                    }) 
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.errors) {
+                            for (let i = 0; i < data.errors.length; i++) {
+                                switch(data.errors[i].param) {
+                                    case 'header':
+                                        headerField.className = 'field error';
+                                        break;
+                                    case 'content':
+                                        contentField.className = 'field error';
+                                        break;
+                                    
+                                    default:
+                                }
+                                popupText.innerHTML += data.errors[i].msg + '<br>';
                             }
-                            popupText.innerHTML += data.errors[i].msg + '<br>';
+                            popup.style.display = "block";
                         }
-                        popup.style.display = "block";
-                    }
-                    if (data.message) {
-                        // blog post created
-                        console.log(data.message)
-                        // redirect to my posts page
-                        window.location.href = "http://localhost:3000/my_posts.html";
-                    }
+                        if (data.message) {
+                            // blog post created
+                            console.log(data.message)
+                            // redirect to my posts page
+                            window.location.href = "http://localhost:3000/my_posts.html";
+                        }
+                        
+                    })
+                    .catch(function(err) {
+                        //Failure
+                        console.log(err)
+                    });
+                }
+
+                // cover image is modified
+                else {
+
+                    // delete old image from online storage
+                    fetch('/blog/deleteImg', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            public_id : imgId
+                        }) 
+                    }) 
+                    .then(response => response.json())
+                    .then(success => {
+                        console.log(106, success)
+                    })
+                    .catch(function(err) {
+                        console.log(110,err)
+                    });
+
+                    // get url and preset
+                    fetch('/blog/getUploadInfo', {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    }) 
+                    .then(response => response.json())
+                    .then(info => {
+                        let formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('upload_preset', info.uploadPreset);
+                        let dateNow = new Date();
+                        console.log(262, dateNow)
+                        let publicId = header + "_" + dateNow.toISOString();
+                        formData.append('public_id', publicId);
+                        
+                        // upload image to online storage
+                        fetch(info.cloudUrl, {
+                            method: 'POST',
+                            body: formData
+                        }) 
+                        .then(response => response.json())
+                        .then(upload => {
+                            console.log(253, upload.url)
+                            // modify blog post (with newly added image)
+                            fetch('/blog/' + getParameterByName('id'), {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ 
+                                    header,
+                                    content,
+                                    coverImgUrl : upload.url,
+                                    dateNow 
+                                })
+                            }) 
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.errors) {
+                                    for (let i = 0; i < data.errors.length; i++) {
+                                        switch(data.errors[i].param) {
+                                            case 'header':
+                                                headerField.className = 'field error';
+                                                break;
+                                            case 'content':
+                                                contentField.className = 'field error';
+                                                break;
+                                            
+                                            default:
+                                        }
+                                        popupText.innerHTML += data.errors[i].msg + '<br>';
+                                    }
+                                    popup.style.display = "block";
+                                }
+                                if (data.message) {
+                                    // blog post created
+                                    console.log(data.message)
+                                    // redirect to my posts page
+                                    window.location.href = "http://localhost:3000/my_posts.html";
+                                }
+                                
+                            })
+                            .catch(function(err) {
+                                //Failure
+                                console.log(err)
+                            });
+                        })
+                        .catch(function(err) {
+                            //Failure
+                            console.log(err)
+                        });
+                    })
+                    .catch(function(err) {
+                        //Failure
+                        console.log(err)
+                    });  
                     
-                })
-                .catch(function(err) {
-                    //Failure
-                    console.log(err)
-                });
+                     
+                }
+                
+                
             }
         }
 
@@ -168,10 +345,11 @@
             .then(response => response.json())
             .then(blog => {
                 if (blog.header) {
-                    console.log(104)
                     document.getElementById('header_text').value = blog.header;
                     document.getElementById('content_text').value = blog.content;
-                    document.getElementById('cover_text').value = blog.coverImgUrl;
+                    currentImg = blog.coverImgUrl;
+                    imgId = blog.header + "_" + new Date(blog.modifiedDate).toISOString();
+                    document.getElementById('image_preview').src = currentImg;
                     document.getElementById('header_word_count_number').innerHTML = blog.header.length + '/100';
                     document.getElementById('content_word_count_number').innerHTML = blog.content.length + '/10000';
                 }
@@ -212,7 +390,7 @@
         // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
-            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+             document.cookie = 'token=N/A; max-age=0;';
             console.log(document.cookie)
 
             // redirect to login page

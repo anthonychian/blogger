@@ -19,11 +19,18 @@
               </a>
             </div>
         </div>
+        
+        <div class="ui hidden divider"></div>
+        <div class="ui hidden divider"></div>
+        <div class="ui raised very padded text container segment">
+            <div id="items"class="ui unstackable items"></div>
+        </div>
 
-        <div id="items"class="ui unstackable items"></div>
+        <!-- <div id="items"class="ui unstackable items"></div> -->
 
     </body>
     <script>
+        
         loggedIn();
         getPost();
         
@@ -47,9 +54,21 @@
                         }) 
                         .then(response => response.json())
                         .then(account => {
-                            let $res = generateBlogTemplate(blog, account[0].firstName, account[0].lastName)
-                            document.title = blog.header;
-                            $(blogDiv).append($res)
+                            fetch('/blog/myid', {
+                                method: 'GET',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
+                            }) 
+                            .then(response => response.json())
+                            .then(myId => {
+                                let $res = generateBlogTemplate(blog, myId, account[0].firstName, account[0].lastName)
+                                document.title = blog.header;
+                                $(blogDiv).append($res)
+                            })
+                            .catch(function(err) {
+                                console.log(err)
+                            });
                         })
                         .catch(function(err) {
                             console.log(err)
@@ -66,33 +85,95 @@
 
         }
 
-        function generateBlogTemplate(blog, firstName, lastName) {
+        function generateBlogTemplate(blog, id, firstName, lastName) {
+            let likeText = "large grey like icon"
+            for (let userId of blog.usersWhoLiked) {
+                if (userId == id) {
+                    likeText = "large red like icon"
+                    break;
+                }
+            }
             let template  = `
-                <div class="ui center aligned segment">
+                <div>
                     <a class="ui huge header">${blog.header}</a>
+                    <div class="ui hidden divider"></div>
                     <div class="content">
                         <div class="details">
-                            <div>Created By: ${firstName} ${lastName}</div>
-                            <div>Post last updated: ${blog.modifiedDate}</div>
+                            <div style="font-size: 14px;">Posted By: ${firstName} ${lastName}</div>
                         </div>
-                    </div>
-                </div>
-                <div class="ui center aligned segment">
-                    <div class="content">
-                        <a class="ui fluid image">
-                            <img src="${blog.coverImgUrl}">
+                        <div class="ui hidden divider"></div>
+                        <a class="ui image">
+                            <img src="${blog.coverImgUrl}" style="width:602px; height:500px; object-fit:contain; background-color: white;">
                         </a>
-                    </div>
-                </div>
-                <div class="ui center aligned segment">
-                    <div class="content">
+                        <div class="ui hidden divider"></div>
+                        <div class="ui hidden divider"></div>
                         <div class=blog_text>
                             <p>${blog.content}</p>
+                            <div class="ui hidden divider"></div>
+                            <div style="font-size: 14px;">Post last updated: ${new Date(blog.modifiedDate).toDateString()}</div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui divider"></div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui hidden divider"></div>
+                            <div class="ui stackable center aligned three column grid">
+                                <div class="column">
+                                    <i id="likes_post_${blog._id}" class="${likeText}"data-value="${blog._id}" data-likes="${blog.likes}" onclick="likePost(this)"></i>
+                                </div>
+                                <div class="column">
+                                    <i class="right large yellow star icon"></i>
+                                </div>
+                                <div class="column">
+                                    <i class="right large grey share icon"></i>
+                                </div>
+                            </div> 
                         </div>
+                        
                     </div>
                 </div>
             `
             return template;
+        }
+
+        function likePost(d) {
+            let id = $(d).data('value');
+            let likes = $(d).data('likes');
+            let likeIcon = document.getElementById('likes_post_'+ id);
+            //let likesNum = document.getElementById('likes_num_'+ id);
+            if (likeIcon.className == "large grey like icon") {
+                fetch('/blog/' + id + '/like', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }) 
+                .then(response => response.json())
+                .then(data => {
+                    likeIcon.className = "large red like icon"
+                    //likesNum.textContent = data;
+                })
+                .catch(function(err) {
+                    //Failure
+                    console.log(err)
+                });
+            }
+            else {
+                fetch('/blog/' + id + '/unlike', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }) 
+                .then(response => response.json())
+                .then(data => {
+                    likeIcon.className = "large grey like icon"
+                    //likesNum.textContent = data;
+                })
+                .catch(function(err) {
+                    //Failure
+                    console.log(err)
+                });
+            }
         }
 
         // from https://stackoverflow.com/questions/53757395/how-to-pass-variable-on-href
@@ -108,7 +189,7 @@
         // deletes cookie and redirects user back to login
         function logout() {
              // save jwt token in a cookie
-            document.cookie = 'token=N/A; Expires=Thu, 01 Jan 1900 00:00:00 GMT;';
+             document.cookie = 'token=N/A; max-age;';
             console.log(document.cookie)
 
             // redirect to blogs page
