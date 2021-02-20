@@ -4,7 +4,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser')
 const fileUpload = require('express-fileupload');
-const expressSanitizer = require('express-sanitizer');
+// const expressSanitizer = require('express-sanitizer');
 
 
 var cors = require('cors')
