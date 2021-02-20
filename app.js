@@ -18,7 +18,7 @@ app.use(cookieParser())
 mongo.connectMongoDB();
 
 app.use(express.json({extended: false}))
-app.use(express.static('../frontend/public'))
+app.use(express.static('./frontend/public'))
 app.use(bodyParser.urlencoded({extended: false}))
 app.use(fileUpload({
     createParentPath: true
