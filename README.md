@@ -8,23 +8,6 @@ This is a website created for blogging. Allows for users to create accounts and 
 npm install
 
 ```
-Dependencies
-
-```
-npm install -g nodemon
-npm install bcrypt
-npm install body-parser
-npm install cloudinary
-npm install cookie-parser
-npm install dotenv
-npm install express
-npm i express-fileupload
-npm install --save express-validator
-npm install jquery
-npm install jsonwebtoken
-npm install mongoose
-
-```
 
 ## Usage
 
