@@ -1,17 +1,23 @@
 # Blog
 
-This is a website created for blogging. Allows for users to create accounts and login or logoff. Users are then be able to create, edit, and delete posts. Posts feature a title and body as well an image uploaded by the user.
+A web application for blogging. Allows for users to create accounts and login or logoff. Users are then be able to create, edit, and delete posts. Posts feature a title and body as well an image uploaded by the user.
 
-## Installation
+# Installation
 
-```
-npm install
+### `npm install`
 
-```
+## Available Scripts
 
-## Usage
+In the project directory, you can run:
 
-To run server use the command 
-```
-npm run dev
-```
+### `npm run dev`
+
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+
+The page will reload if you make edits.\
+You will also see any lint errors in the console.
+
+### `npm run test`
+
+Runs all tests suites using jest.\
