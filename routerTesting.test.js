@@ -45,7 +45,7 @@ describe('Testing endpoints', () => {
 
     it('should get all blogs', async() => {
         const blogs = await blogService.getAllBlogs(testingUserId);
-        expect(blogs.length).toBe(8);
+        expect(blogs.length).toBe(9);
     })
 
     it('should get all my posts', async() => {

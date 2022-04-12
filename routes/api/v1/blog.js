@@ -26,38 +26,38 @@ router.get('/getUploadInfo', (req, res) => {
 
 // display only users posts
 router.get('/myposts', verify.authenticateToken, async (req, res) => {
-    const userId = req.user.user.id;
-    const posts = await blogClass.getMyPosts(userId);
+    // const userId = req.user.user.id;
+    // const posts = await blogClass.getMyPosts(userId);
 
-    if (!posts) {
-        return status(500).send("Internal Server Error");
+    // if (!posts) {
+    //     return status(500).send("Internal Server Error");
+    // }
+
+    // return posts;
+    try {
+        //console.log(req.user.user.id)
+        let account = await Account.findOne({ _id : req.user.user.id, isDelete: "false"})
+        if (!account) {
+            return res.status(400).json({
+                login_error: 'Please login'
+            });
+        }
+        Blog.find({ userId : req.user.user.id, isDelete: "false" })
+        .then(
+            (blog) => {
+                return res.status(200).json(blog);
+            }
+        ).catch(
+            (error) => {
+                return res.status(404).json({
+                    error: error
+                });
+            }
+        );
     }
-
-    return posts;
-    // try {
-    //     //console.log(req.user.user.id)
-    //     let account = await Account.findOne({ _id : req.user.user.id, isDelete: "false"})
-    //     if (!account) {
-    //         return res.status(400).json({
-    //             login_error: 'Please login'
-    //         });
-    //     }
-    //     Blog.find({ userId : req.user.user.id, isDelete: "false" })
-    //     .then(
-    //         (blog) => {
-    //             return res.status(200).json(blog);
-    //         }
-    //     ).catch(
-    //         (error) => {
-    //             return res.status(404).json({
-    //                 error: error
-    //             });
-    //         }
-    //     );
-    // }
-    // catch(error) {
-    //     return res.status(500).send(error)
-    // }
+    catch(error) {
+        return res.status(500).send(error)
+    }
 });
 // return current user id
 router.get('/myid', verify.authenticateToken, async (req, res) => {
@@ -67,80 +67,81 @@ router.get('/myid', verify.authenticateToken, async (req, res) => {
 
 // return list of all blogs
 router.get('/', verify.authenticateToken, async (req, res) => {
-    const userId = req.user.user.id;
-    const blogs = await blogClass.getAllBlogs(userId);
+    // const userId = req.user.user.id;
+    // const blogs = await blogClass.getAllBlogs(userId);
 
-    if (!blogs) {
-        return status(500).send("Internal Server Error");
-    }
+    // if (!blogs) {
+    //     return res.status(500).send("Internal Server Error");
+    // }
 
-    return blogs;
+    // return blogs;
     
-    // try {
-    //     let account = await Account.findOne({ _id : req.user.user.id, isDelete: "false"})
-    //     if (!account) {
-    //         return res.status(400).json({
-    //             login_error: 'Please login'
-    //         });
-    //     }
-    //     Blog.find({ isDelete: "false" })
-    //     .then(
-    //         (blog) => {
-    //             return res.status(200).json(blog);
-    //         }
-    //     ).catch(
-    //         (error) => {
-    //             return res.status(404).json({
-    //                 error: error
-    //             });
-    //         }
-    //     );
-    // }
-    // catch(error) {
-    //     return status(500).send(error)
-    // }
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id, isDelete: "false"})
+        if (!account) {
+            return res.status(400).json({
+                login_error: 'Please login'
+            });
+        }
+        Blog.find({ isDelete: "false" })
+        .then(
+            (blog) => {
+                console.log('blog', blog)
+                return res.status(200).json(blog);
+            }
+        ).catch(
+            (error) => {
+                return res.status(404).json({
+                    error: error
+                });
+            }
+        );
+    }
+    catch(error) {
+        return status(500).send(error)
+    }
 });
 
 // get a specific blog (_id in mongodb)
 router.get('/:id', verify.authenticateToken, async (req, res) => {
-    const userId = req.user.user.id;
-    const postId = req.params.id;
-    const post = await blogClass.getPost(userId, postId);
+    // const userId = req.user.user.id;
+    // const postId = req.params.id;
+    // const post = await blogClass.getPost(userId, postId);
 
-    if (!post) {
-        return status(500).send("Internal Server Error");
+    // if (!post) {
+    //     return status(500).send("Internal Server Error");
+    // }
+
+    // return post;
+
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
+        if (!account) {
+            return res.status(400).json({
+                login_error: 'Please login'
+            });
+        }
+        Blog.findOne({ _id : req.params.id, isDelete: false })
+        .then(
+            (blog) => {
+                if (blog == null) {
+                    return res.status(404).json({
+                        message: 'No blog post found'
+                    });
+                }
+                return res.status(200).json(blog);
+            }
+        ).catch(
+            (error) => {
+                return res.status(404).json({
+                    error: error
+                });
+            }
+        );
     }
-
-    return post;
-
-    // try {
-    //     let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
-    //     if (!account) {
-    //         return res.status(400).json({
-    //             login_error: 'Please login'
-    //         });
-    //     }
-    //     Blog.findOne({ _id : req.params.id, isDelete: false })
-    //     .then(
-    //         (blog) => {
-    //             if (blog == null) {
-    //                 return res.status(404).json({
-    //                     message: 'No blog post found'
-    //                 });
-    //             }
-    //             return res.status(200).json(blog);
-    //         }
-    //     ).catch(
-    //         (error) => {
-    //             return res.status(404).json({
-    //                 error: error
-    //             });
-    //         }
-    //     );
-    // }
-    // catch(error) {
-    //     return res.status(500).send(error)
-    // }
+    catch(error) {
+        return res.status(500).send(error)
+    }
 });
 
 
@@ -316,87 +317,87 @@ router.delete('/:id', verify.authenticateToken, async (req, res) => {
 
 // like post
 router.put('/:id/like', verify.authenticateToken, async (req, res) => { 
-    const userId = req.user.user.id;
-    const postId = req.params.id;
-    const likes = await blogClass.likePost(userId, postId);
+    // const userId = req.user.user.id;
+    // const postId = req.params.id;
+    // const likes = await blogClass.likePost(userId, postId);
 
-    if (!likes) {
-        return status(500).send("Internal Server Error");
-    }
+    // if (!likes) {
+    //     return res.status(500).send("Internal Server Error");
+    // }
 
-    return likes;
+    // return likes;
     
-    // try {
-    //     let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
-    //     if (!account) {
-    //         return res.status(400).json({
-    //             login_error: 'Please login'
-    //         });
-    //     }
-    //     // find unliked blog post and like it
-    //     Blog.findOneAndUpdate(
-    //         { _id : req.params.id , isDelete: false },
-    //         {
-    //             $inc: {likes: 1},
-    //             $push: {usersWhoLiked: req.user.user.id}
-    //         }
-    //     )
-    //     .then(
-    //         (data) => {
-    //             return res.status(201).json(data.likes + 1)
-    //         }
-    //     ).catch(
-    //         (error) => {
-    //             return res.status(404).json({
-    //                 error: error
-    //             });
-    //         }
-    //     );
-    // }
-    // catch(error) {
-    //     return res.status(500).send(error)
-    // }
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
+        if (!account) {
+            return res.status(400).json({
+                login_error: 'Please login'
+            });
+        }
+        // find unliked blog post and like it
+        Blog.findOneAndUpdate(
+            { _id : req.params.id , isDelete: false },
+            {
+                $inc: {likes: 1},
+                $push: {usersWhoLiked: req.user.user.id}
+            }
+        )
+        .then(
+            (data) => {
+                return res.status(201).json(data.likes + 1)
+            }
+        ).catch(
+            (error) => {
+                return res.status(404).json({
+                    error: error
+                });
+            }
+        );
+    }
+    catch(error) {
+        return res.status(500).send(error)
+    }
 });
 // unlike post
 router.put('/:id/unlike', verify.authenticateToken, async (req, res) => { 
-    const userId = req.user.user.id;
-    const postId = req.params.id;
-    const likes = await blogClass.unlikePost(userId, postId);
+    // const userId = req.user.user.id;
+    // const postId = req.params.id;
+    // const likes = await blogClass.unlikePost(userId, postId);
 
-    if (!likes) {
-        return status(500).send("Internal Server Error");
-    }
+    // if (!likes) {
+    //     return status(500).send("Internal Server Error");
+    // }
 
-    return likes;
+    // return likes;
     
-    // try {
-    //     let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
-    //     if (!account) {
-    //         return res.status(400).json({
-    //             login_error: 'Please login'
-    //         });
-    //     }
+    try {
+        let account = await Account.findOne({ _id : req.user.user.id, isDelete:"false"})
+        if (!account) {
+            return res.status(400).json({
+                login_error: 'Please login'
+            });
+        }
 
-    //     // find liked blog post and unlike it
-    //     Blog.findOneAndUpdate(
-    //         { _id : req.params.id , isDelete: false, usersWhoLiked: {$all:[req.user.user.id]} },
-    //         {
-    //             $inc: {likes: -1},
-    //             $pull: {usersWhoLiked: req.user.user.id}
-    //         }
-    //     )
-    //     .then((data) => {
-    //         return res.status(201).json(data.likes - 1)
-    //     })
-    //     .catch((error) => {
-    //         return res.status(404).json({
-    //             error: error
-    //         });
-    //     });
-    // }
-    // catch(error) {
-    //     return res.status(500).send(error)
-    // }
+        // find liked blog post and unlike it
+        Blog.findOneAndUpdate(
+            { _id : req.params.id , isDelete: false, usersWhoLiked: {$all:[req.user.user.id]} },
+            {
+                $inc: {likes: -1},
+                $pull: {usersWhoLiked: req.user.user.id}
+            }
+        )
+        .then((data) => {
+            return res.status(201).json(data.likes - 1)
+        })
+        .catch((error) => {
+            return res.status(404).json({
+                error: error
+            });
+        });
+    }
+    catch(error) {
+        return res.status(500).send(error)
+    }
 })
 
 // router.post('/uploadImg', async (req, res) => { 

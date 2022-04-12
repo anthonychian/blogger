@@ -16,6 +16,7 @@ class BlogService {
             console.log('blogs', blogs);
             console.log('done');
             return blogs;
+            
             // Blog.find({ isDelete: "false" })
             // .then((blog) => {
             //     return res.status(200).json(blog);
@@ -35,7 +36,6 @@ class BlogService {
 
     async getMyPosts(userId) {
         try {
-            //console.log(req.user.user.id)
             let account = await Account.findOne({ _id : userId, isDelete: "false"})
             if (!account) {
                 return res.status(400).json({
